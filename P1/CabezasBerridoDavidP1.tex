@@ -159,6 +159,11 @@ Ahora copiamos la clave pública en M1 ejecutando (desde M2)
 nos pide la contraseña (Swap1234) y nos dice que se ha añadido 1 clave. Ahora nos podemos conectar con SSH sin poner sin que nos pida
 la contraseña, nos pedirá la passphrase en caso de haber puesto una.
 
+Hemos elegido crear la pareja de claves en los archivos por defecto (\texttt{$\mathtt{\sim}$/.ssh/id\_rsa} y
+ \texttt{$\mathtt{\sim}$/.ssh/id\_rsa.pub}). De haber
+seleccionado otros archivos, tendríamos que indicar con la opción \texttt{-i} el archivo de clave a copiar (pública) y a utilizar
+para autenticarse (privada).
+
 \section{Configuración de red}
 
 Ya tenemos los dos adaptadores de red (NAT y Host-only) creados. Cuando instalamos el sistema se configuran por defecto,
@@ -208,9 +213,12 @@ desde la máquina anfitriona antes de este cambio, habrá que borrar la fingerpr
 	\label{fig:static-ip}
 \end{figure}
 
-\section{Apache2}
+\section{Servicios LAMP}
 
-Puesto que no marcamos los servicios LAMP durante la instalación, debemos instalarlos manualmente. Empezamos con Apache2, en ambas máquinas ejecutamos:
+\subsection{Apache2}
+
+Puesto que no marcamos los servicios LAMP durante la instalación, debemos instalarlos manualmente. Empezamos con Apache2,
+en ambas máquinas ejecutamos:
 \begin{verbatim}
 	sudo apt install -y apache2
 \end{verbatim}
@@ -228,6 +236,50 @@ Para comprobar la versión que hemos instalado usamos \texttt{apache2 -v}, y par
 	\label{fig:apache2}
 \end{figure}
 
+En la máquina 1 cambiamos el puerto de escucha al 8000 escribiendo \texttt{Listen 8000} en el fichero \texttt{/etc/apache2/ports.conf}.
+En el fichero avisa de que modifiquemos también \texttt{/etc/apache2/sites-enabled/000-default.conf}, donde cambiamos la línea
+\begin{verbatim}
+	<VirtualHost *:80>
+\end{verbatim}
+por \texttt{<VirtualHost *:8000>}.
 
+Ejecutamos \texttt{sudo apache2ctl configtest} para comprobar que está todo bien. Nos da un warning diciendo que le pongamos un
+nombre de dominio al servidor, ya que actualmente se está usando (\texttt{127.0.1.1}). Lo cambiamos añadiendo la línea
+\begin{verbatim}
+	ServerName 192.168.56.101
+\end{verbatim}
+al fichero \texttt{/etc/apache2/apache2.conf}. También cambiamos el nombre a
+\texttt{192.168.56.102} en la M2. Ahora la comprobación sólo nos devuelve Syntax OK.
+ Reestablecemos el servicio para que se apliquen los cambios.
+
+\begin{verbatim}
+	sudo systemctl restart apache2
+\end{verbatim}
+
+Desde la máquina anfitriona podemos visitar las direcciones \texttt{192.168.56.101:8000} (M1, hemos cambiado el puerto de escucha)
+ y \texttt{192.168.56.102} (M2, puerto 80 por defecto). Comprobamos que Apache funciona correctamente, se sirve el fichero
+ \texttt{/var/www/html/index.html}.
+ 
+\begin{figure}[H]
+	\centering
+	\subfigure[M1, al puerto 8000.]{\includegraphics[width=140mm]{imgs/apache-page1}}
+	\subfigure[M2, al puerto por efecto (80).]{\includegraphics[width=140mm]{imgs/apache-page2}}
+	\caption{El servicio Apache funciona correctamente, hemos cambiado el puerto de escucha en M1.}
+	\label{fig:apache-page}
+\end{figure}
+
+\subsection{MySQL}
+
+A continuación, instalamos MySQL:
+
+
+
+Ahora instalamos cURL:
+
+\begin{verbatim}
+sudo apt install curl
+\end{verbatim}
+
+y nos dice en ambas máquinas que ya está instalado y en su última versión.
 
 \end{document}
