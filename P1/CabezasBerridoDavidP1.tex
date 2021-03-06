@@ -26,6 +26,10 @@
 \usepackage{amsfonts}
 \usepackage{amsmath}
 
+\usepackage[formats]{listings}
+\lstdefineformat{R}{~=\( \sim \)}
+\lstset{basicstyle=\ttfamily,format=R}
+
 \definecolor{gris}{RGB}{220,220,220}
 	
 \usepackage{float} % para controlar la situaciÃ³n de los entornos flotantes
@@ -257,8 +261,9 @@ al fichero \texttt{/etc/apache2/apache2.conf}. También cambiamos el nombre a
 \end{verbatim}
 
 Desde la máquina anfitriona podemos visitar las direcciones \texttt{192.168.56.101:8000} (M1, hemos cambiado el puerto de escucha)
- y \texttt{192.168.56.102} (M2, puerto 80 por defecto). Comprobamos que Apache funciona correctamente, se sirve el fichero
- \texttt{/var/www/html/index.html}.
+ y \texttt{192.168.56.102} (M2, puerto 80 por defecto). Comprobamos que Apache funciona correctamente, nos sirve el fichero
+ \texttt{/var/www/html/index.html}. Se puede cambiar el directorio modificando \texttt{DocumentRoot} en 
+ \texttt{/etc/sites-available/000-default.conf}.
  
 \begin{figure}[H]
 	\centering
@@ -268,18 +273,209 @@ Desde la máquina anfitriona podemos visitar las direcciones \texttt{192.168.56.
 	\label{fig:apache-page}
 \end{figure}
 
+Creamos el fichero \texttt{/var/www/html/ejemplo.html} en ambas máquinas. Mostramos el de la máquina 1.
+
+\begin{Verbatim}[tabsize=4]
+<html>
+	<head>
+		<meta charset="UTF-8">
+	</head>
+	<body>
+		Web de dxabezas para SWAP (máquina 1) </br>
+		Email: dxabezas@correo.ugr.es
+	</body>
+</html>	
+\end{Verbatim}
+
+Desde el anfitrión visualizamos el fichero correctamente en ambas máquinas:
+
+\begin{figure}[H]
+	\centering
+	\subfigure[Ejemplo de la máquina 1.]{\includegraphics[width=120mm]{imgs/ejemplo-m1}}
+	\subfigure[Ejemplo de la máquina 2.]{\includegraphics[width=120mm]{imgs/ejemplo-m2}}
+	\caption{Archivos de ejemplo de ambas máquinas.}
+	\label{fig:ejemplo}
+\end{figure}
+
+\subsubsection{Redirección de puertos}
+
+En la máquina 1 atendemos peticiones desde el puerto 8000. Redireccionaremos las peticiones al puerto 80 para que se atiendan desde el
+8000. Debemos hacer que Apache escuche en ambos puertos escribiendo \texttt{Listen 8000} y \texttt{Listen 80} en
+ \texttt{/etc/apache2/ports.conf}.
+
+A continuación seguimos las instrucciones de \\ \href{https://stackoverflow.com/questions/8541182/apache-redirect-to-another-port}
+{https://stackoverflow.com/questions/8541182/apache-redirect-to-another-port}.
+
+En \texttt{/etc/apache2/sites-enabled/000-default.conf}, añadimos el siguiente bloque:
+
+\begin{Verbatim}[tabsize=4]
+	<VirtualHost *:80>
+		ProxyPreserveHost On
+		ProxyRequests Off
+		ProxyPass / http://localhost:8000/
+		ProxyPassReverse / http://localhost:8000/
+	</VirtualHost>
+\end{Verbatim}
+
+Ahora tenemos que añadir los módulos \texttt{proxy} y \texttt{proxy\_http}. Finalmente, reiniciamos el servicio.
+
+\begin{verbatim}
+	sudo a2enmod proxy
+	sudo a2enmod proxy_http
+	sudo systemctl restart apache2
+\end{verbatim}
+
+Ahora M1 es capaz de servir los archivos desde el puerto por defecto:
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=160mm]{imgs/port-redirection}
+	\caption{M1 sirve el fichero \texttt{/var/www/html/info.php} (que añadimos en la Sección \ref{sec:php}) ante una petición al puerto 80,
+		 que redirige al 8000.}
+	\label{fig:port-redirection}
+\end{figure}
+
+\subsubsection{Directorios virtuales}
+
+Serviremos un directorio en \texttt{home} de la máquina 1. Creamos dos ficheros: \texttt{/home/dxabezas/carpeta/hola.html},
+\texttt{/home/dxabezas/carpeta/hello.html}, con los mensajes ``Hola Mundo!'' y ``Hello World!''. A continuación, creamos un link simbólico
+ de \texttt{carpeta} en \texttt{/var/www/html}
+
+\begin{lstlisting}
+	sudo ln -s ~/carpeta /var/www/html/carpeta
+\end{lstlisting}
+
+Ahora Apache puede servir ambos archivos:
+
+\begin{figure}[H]
+	\centering
+	\subfigure[Directorio \texttt{carpeta}.]{\includegraphics[width=100mm]{imgs/carpeta}}
+	\subfigure[Archivo \texttt{/home/dxabezas/carpeta/hello.html}.]{\includegraphics[width=140mm]{imgs/hello}}
+	\caption{Gracias al enlace simbólico, Apache puede servir un subdirectorio de \texttt{home}.}
+	\label{fig:virtual}
+\end{figure}
+
 \subsection{MySQL}
 
-A continuación, instalamos MySQL:
+A continuación instalamos MySQL, tanto el servicio de servidor como de cliente
 
+\begin{verbatim}
+	sudo apt install mysql-client mysql-server
+\end{verbatim}
+Con \texttt{sudo systemctl status mysql.service}, comprobamos que el servicio está en marcha. Procedemos a la instalación
+segura con \texttt{sudo mysql\_secure\_installation}. Nos hace varias preguntas para configurar la seguridad, en ambas máquinas:
 
+\begin{itemize}
+	\item No establecemos el plugin de validación de contraseñas, que obliga a que las contraseñas sean seguras.
+	\item Elegimos \textbf{Swap1234} como contraseña para el usuario root de MySQL.
+	\item Eliminamos el usuario anónimo para pruebas, compromete la seguridad de la base de datos una vez en producción.
+	\item Deshabilitamos el remote root login, el root deberá loguearse desde localhost.
+	\item Eliminamos la base de datos de test para la que todo el mundo tiene privilegios, compromete la seguridad en producción.
+	También se eliminan los privilegios sobre esta BD en la tabla de privilegios.
+	\item Recargamos la tabla de privilegios para hacer estos cambios efectivos.
+\end{itemize}
 
-Ahora instalamos cURL:
+Ya podemos acceder con \texttt{sudo mysql -u root -p=Swap1234}, o \texttt{-p} para que nos solicite la contraseña a continuación.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=160mm]{imgs/mysql}
+	\caption{Acceso a MySQL en la máquina 1.}
+	\label{fig:mysql}
+\end{figure}
+
+\subsection{PHP} \label{sec:php}
+
+Instalamos PHP con \texttt{sudo apt install php}, automáticamente nos avisa de que va a instalar la versión 7.2 y de algunos paquetes
+que necesita como \texttt{php7.2-json} y \texttt{libapache2-mod-php7.2}.
+
+Para comprobar que funciona, creamos un fichero \texttt{/var/www/html/info.php} con el contenido
+
+\begin{verbatim}
+	<?php
+	phpinfo();
+	?>
+\end{verbatim}
+
+y comprobamos que se sirve correctamente desde la máquina anfitriona.
+
+\begin{figure}[H]
+	\centering
+	\subfigure[Máquina 1, en la que cambiamos el puerto de HTML.]{\includegraphics[width=160mm]{imgs/php1}}
+	\subfigure[Máquina 2.]{\includegraphics[width=160mm]{imgs/php2}}
+	\caption{Desde la máquina anfitriona, comprobamos que PHP funciona correctamente en ambas máquinas.}
+	\label{fig:php-info}
+\end{figure}
+
+\section{cURL}
+
+Instalamos cURL:
 
 \begin{verbatim}
 sudo apt install curl
 \end{verbatim}
+nos dice en ambas máquinas que ya está instalado y en su última versión.
 
-y nos dice en ambas máquinas que ya está instalado y en su última versión.
+Como primera prueba, obtenemos fichero \texttt{/var/www/html/ejemplo.html} de la máquina 1 desde la 2:
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=120mm]{imgs/curl}
+	\caption{Visualizamos el ejemplo de M1 en M2 mediante cURL.}
+	\label{fig:curl}
+\end{figure}
+
+Con la opción \texttt{-o}, podemos descargar el fichero en la máquina 2:
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=140mm]{imgs/curl-o}
+	\caption{Descargamos el ejemplo de M1 en M2 mediante cURL.}
+	\label{fig:curl-o}
+\end{figure}
+
+La opción \texttt{-O} es similar, guarda el fichero con el mismo nombre con el que está subido. Esta vez hacemos la petición
+al puerto 8000 en lugar de al puerto por defecto (80).
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=140mm]{imgs/curl-O}
+	\caption{Descargamos el ejemplo de M1 en M2 mediante cURL.}
+	\label{fig:curl-O}
+\end{figure}
+
+Todas las peticiones que hemos hecho son GET (por defecto). Si quisiésemos realizar otra petición (como POST,
+PUT, COPY o DELETE), tendríamos que explicitarla con la opción \texttt{--request <peticion>}.
+
+Por ejemplo, podríamos subir un JSON con el siguiente comando:
+
+\begin{verbatim}
+	curl --location --request POST '<direccion>' --header 'Content-Type: application/json'
+	--data-raw '{nombre: "David", apellidos: "Cabezas Berrido"}'
+\end{verbatim}
+
+\subsection{Cookies}
+
+Para utilizar cookies con cURL, debemos conocer dos opciones. La primera es \texttt{-c} o \texttt{--cookie-jar}, con la que se indica
+el nombre de un archivo para almacenar las cookies. Por ejemplo:
+
+\begin{verbatim}
+	curl -c cookie.txt https://www.google.com
+\end{verbatim}
+
+Se crea el archivo \texttt{cookie.txt}:
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=130mm]{imgs/cookie-c}
+	\caption{Se ha creado el archivo con la cookie.}
+	\label{fig:cookie-c}
+\end{figure}
+
+La segunda opción es \texttt{-b} o \texttt{--cookie}, para enviar cookies. Por ejemplo:
+
+\begin{verbatim}
+curl -b cookie.txt https://www.google.com
+\end{verbatim}
 
 \end{document}
