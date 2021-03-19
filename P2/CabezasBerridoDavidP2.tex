@@ -249,6 +249,25 @@ Ahora escribimos de forma manual la clave que generamos en la primera práctica 
 
 \section{Programación de tareas: crontab}
 
+En la máquina 2, utilizamos el demonio cron para que sincronice su directorio \texttt{/var/www} con el de M1 cada hora,
+concretamente en el minuto 0. Esto lo conseguimos haciendo \texttt{crontab -e} en la máquina 2 y añadiendo la siguiente línea:
+\begin{verbatim}
+	# m h dom mon dow command
+	0 * * * * rsync -avz -e ssh dxabezas@192.168.56.101:/var/www/ /var/www/ --delete
+\end{verbatim}
+Como se nos indica el fichero, no hace falta escribir el usuario porque ya sabe cuál es. Esperamos un poco y comprobamos que se sincroniza
+ correctamente.
 
+Hemos usado \texttt{--delete} para que el contenido de las carpetas sea idéntico.
+
+Ahora señalaremos algunas opciones avanzadas para crontab. En primer lugar, el carácter \texttt{-} puede usarse para indicar intervalos, y
+el carácter \texttt{/} para indicar saltos. Por ejemplo, si ponemos \texttt{0 12 1-15/3 * *}, la tarea se ejecutará los días 1,4,7,10,12 y 15
+de cada mes a las 12 del mediodía.
+
+También tenemos atajos, que se marcan con el carácter \texttt{@}. Por ejemplo, \texttt{@weekly} equivale a \texttt{0 0 * * 0}, que ejecuta
+la tarea cada domingo (día 0) a las 00:00. De igual forma, existen \texttt{@yearly} y \texttt{@annually} para ejecutar la tarea el 1 de
+enero a las 00:00; y \texttt{@hourly}, \texttt{@daily} y \texttt{@monthly}.
+
+Finalmente tenemos \texttt{@reboot}, que lanza la tarea tras cada vez que apagamos y encendemos la máquina.
 
 \end{document}
