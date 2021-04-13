@@ -197,7 +197,7 @@ upstream balanceo_dxabezas {
 Ahora marcamos M2 como backup y siempre nos atiende M1. Si desactivamos el servicio de M1 con \\
 \verb^sudo systemctl stop apache2^, pasa a atendernos todo el rato M2.
 
-\section{Balanceo de carga con HAproxy}
+\section{Balanceo de carga con HAProxy}
 
 Primero apagamos NGINX para que libere el puerto 80 con \verb^sudo systemctl stop nginx^
 
@@ -255,7 +255,7 @@ backend balanceo_dxabezas
 Ahora nos atiende siempre M1.
     
 Finalmente, ponemos M1 en modo \texttt{backup}. Debemos añadir \texttt{check}, ya que no se activa el servidor de
-backup si check no devuelve \texttt{DOWN}. Si no añadimos la comprobación, las peticiones no son atendidas.
+backup si \texttt{check} no devuelve \texttt{DOWN}. Si no añadimos la comprobación, las peticiones no son atendidas.
 \begin{Verbatim}[tabsize=4]
 frontend http-in
 	bind *:80
@@ -267,7 +267,116 @@ backend balanceo_dxabezas
 \end{Verbatim}
 Nos atiende siempre M2, pero cuando apagamos el servicio Apache2 en M2, pasa a atendernos siempre M1.
 
-\section{Estadísticas de HAproxy}
+\section{Estadísticas de HAProxy}
 
+Dejamos la configuración con Round-Robin básico, pero mantenemos los \texttt{check}.
+
+Ahora añadimos la siguiente configuración (a HAProxy) para habilitar las estadísticas: En \texttt{global} escribimos
+\verb^stats socket /var/lib/haproxy/stats^, sustituyéndo la anterior línea de \texttt{stats socket}; y añadimos el
+siguiente bloque:
+\begin{Verbatim}[tabsize=4]
+listen stats
+	bind *:9999
+	mode http
+	stats enable
+	stats uri /stats
+	stats realm HAProxy\ Statistics
+	stats auth dxabezas:dxabezas
+\end{Verbatim}
+Reseteamos el servicio. Ahora, en la ruta \texttt{/stats} del puerto 9999 podemos ver las estadísticas,
+logueandonos primero con \texttt{dxabezas} tanto como usuario como contraseña.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=170mm]{imgs/stats-dashboard}
+	\caption{Estadísticas de HAProxy, podemos ver los pesos de cada servidor, las sesiones totales,
+		las sesiones actualtes de cada servidor (Cur=0), el máximo (1) y el límite de sesiones
+		 concurrentes (\texttt{maxconn 32}); también el tiempo que llevan funcionando.}
+	\label{fig:stats-dashboard}
+\end{figure}
+
+Añadiendo estas dos líneas a \verb^listen stats^ y restaurando el servicio, hacemos que los datos se refresquen
+cada 15 segundos, y que podamos modificar marcar los servidores como DOWN o MAINTENANCE, o cortar sus sesiones
+actuales.
+\begin{Verbatim}[tabsize=4]
+	stats refresh 15s
+	stats admin if TRUE
+\end{Verbatim}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=170mm]{imgs/stats-admin}
+	\caption{Podemos elegir acciones que aplicar a los servidores que marcamos.}
+	\label{fig:stats-admin}
+\end{figure}
+
+\section{Balanceo de carga con Pound}
+
+Descargamos el programa de aquí:
+\href{https://packages.ubuntu.com/xenial-updates/amd64/pound/download}{https://packages.ubuntu.com/xenial-updates/amd64/pound/download}.
+
+Ahora nos vamos al fichero de configuración \texttt{/etc/pound/pound.cfg} y escribimos lo siguiente:
+\begin{Verbatim}[tabsize=4]
+ListenHTTP
+	Address 192.168.56.103
+	Port    80
+End
+
+Service
+	BackEnd
+		Address 192.168.56.101
+		Port    80
+		Priority        2
+	End
+
+	BackEnd
+		Address 192.168.56.102
+		Port    80
+		Priority        1
+	End
+End
+\end{Verbatim}
+Además, hay que cambiar \texttt{startup=0} por \texttt{startup=1}, en el fichero \texttt{/etc/default/pound}
+como se indica en el siguiente mensaje de estado (sale cortado): 
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=150mm]{imgs/pound-status}
+	\caption{El servicio no arrancará hasta que no se marque como configurado.}
+	\label{fig:pound-status}
+\end{figure}
+Hemos aprovechado para poner ponderaciones con \texttt{Priority}. Nos conectamos a la IP de M3 desde el
+navegador y nos atiende M1, M1, M2, M1, M1, M2, M1, M1, M2, \ldots
+
+Se pueden poner más opciones como \texttt{TimeOut 10}, para fijar un tiempo de TimeOut de 10 segundos
+antes de que Pound considere que el servidor no va a responder.
+
+Como opción avanzada, introducimos \texttt{Emergency}, para que sólo use el servidor cuando el resto falle.
+\begin{Verbatim}[tabsize=4]
+Service
+	BackEnd
+		Address 192.168.56.101
+		Port    80
+	End
+
+	Emergency
+		Address 192.168.56.102
+		Port    80
+	End
+End
+\end{Verbatim}
+Ahora nos atiende siempre M1, pero si apagamos el servicio Apache2 en M1 pasa a atendernos M2.
+
+\section{Balanceo de carga con Gobetween}
+
+Primero instalamos \href{https://golang.org/}{Go} 1.15 siguiendo estas instrucciones:
+\href{https://tecadmin.net/install-go-on-ubuntu/}{https://tecadmin.net/install-go-on-ubuntu/},
+es necesario para la instalación.
+
+Instalamos el balanceador desde la terminal, nos vamos a \texttt{/etc/} y ejecutamos
+\begin{Verbatim}[tabsize=4]
+sudo git clone https://github.com/yyyar/gobetween.git
+cd gobetween
+sudo -E make install
+\end{Verbatim}
 
 \end{document}
