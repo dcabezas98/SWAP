@@ -366,6 +366,30 @@ End
 \end{Verbatim}
 Ahora nos atiende siempre M1, pero si apagamos el servicio Apache2 en M1 pasa a atendernos M2.
 
+Finalmente, Pound tiene una funcionalidad similar al IP-Hash llamada \texttt{Session}, que hace que las
+peticiones provenientes de la misma IP sean atendidas por la misma máquina dentro de un tiempo, a partir
+del cual se descarta la sesión. Dejamos la configuración de esta forma:
+\begin{Verbatim}[tabsize=4]
+Service
+	BackEnd
+		Address 192.168.56.101
+		Port    80
+	End
+
+	BackEnd
+		Address 192.168.56.102
+		Port    80
+	End
+	
+	Session
+		Type IP
+		TTL 60
+	End
+End
+\end{Verbatim}
+Las peticiones de la misma IP siempre son atendidas por al misma máquina. Tras 60 segundos sin peticiones, se
+descarta la sesión.
+
 \section{Balanceo de carga con Gobetween}
 
 Primero instalamos \href{https://golang.org/}{Go} 1.15 siguiendo estas instrucciones:
