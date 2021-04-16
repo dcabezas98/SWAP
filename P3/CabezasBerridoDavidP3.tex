@@ -345,7 +345,7 @@ como se indica en el siguiente mensaje de estado (sale cortado):
 	\label{fig:pound-status}
 \end{figure}
 Hemos aprovechado para poner ponderaciones con \texttt{Priority}. Nos conectamos a la IP de M3 desde el
-navegador y nos atiende M1, M1, M2, M1, M1, M2, M1, M1, M2, \ldots
+navegador y nos M1 atiende el doble de peticiones que M2.
 
 Se pueden poner más opciones como \texttt{TimeOut 10}, para fijar un tiempo de TimeOut de 10 segundos
 antes de que Pound considere que el servidor no va a responder.
@@ -389,6 +389,85 @@ End
 \end{Verbatim}
 Las peticiones de la misma IP siempre son atendidas por al misma máquina. Tras 60 segundos sin peticiones, se
 descarta la sesión.
+
+\section{Someter a carga la granja web con AB}
+
+Apache Benchmark se instala con el servicio Apache2, lo instalo en mi máquina anfitriona, desde la que lanzaré
+peticiones a M3.
+
+Lanzamos el benchmark desde la máquina anfitriona. Lanzamos 10000 peticiones con un nivel de concurrencia de 10.
+
+\begin{Verbatim}[tabsize=4]
+ab -n 10000 -c 10 http://192.168.56.103/index.html
+\end{Verbatim}
+
+Observamos con \texttt{top} como Apache2 se convierte en el proceso que más recursos consume de M1 Y M2, y 
+el balanceador el que más consume de M3.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=170mm]{imgs/top}
+	\caption{Ante la llegada masiva de peticiones, los servicios empiezan a consumir más recursos.}
+	\label{fig:top}
+\end{figure}
+
+Esperamos unos segundos, y AB nos genera un informe sobre el rendimiento del servidor.
+
+\begin{figure}[H]
+	\centering
+	\subfigure{\includegraphics[width=130mm]{imgs/ab-1}}
+\end{figure}\begin{figure}[H]\ContinuedFloat
+	\subfigure{\includegraphics[width=90mm]{imgs/ab-2}}
+	\subfigure{\includegraphics[width=80mm]{imgs/ab-3}}
+	\caption{Salida de Apache Benchmark. In la primera imagen nos informa del progreso de benchmarking. En
+	la segunda imagen tenemos información sobre el servidor y el fichero solicitado (\texttt{index.html}), así como
+del número de peticiones y bytes transferidos y el tiempo tomado. En la tercera imagen tenemos estadísticas sobre
+los tiempos que toma la conexión, procesamiento y espera de las peticiones, y también los milisegundos bajo los cuales
+se han atendido distintos porcentajes de peticiones.}
+	\label{fig:ab}
+\end{figure}
+Aunque vayamos a utilizar el criterio peticiones/segundo (en este caso 1259, segunda imagen) para comparar los balanceadores, 
+también son muy interesantes
+las medias de la tercera imagen. Nos permiten ``asegurar'' que nuestro servidor atiende cierto porcentaje de las peticiones
+en cierto tiempo. Ej: ``Generalmente, ninguna petición tarda en antenderse más de 23 ms'',
+``El 99\% de las peticiones que recibe son atendidas en 14 segundos o menos''.
+
+Por último, introduciremos algunas opciones y parámetros de Apache Benchmark que pueden ser útiles.
+\begin{itemize}
+	\item \texttt{-e archivo.csv} genera un archivo CSV con los datos de la segunda mitad de la tercera imagen.
+	\item \texttt{-q} elimina los mensajes de progreso.
+	\item \texttt{-t 60} indica el número máximo de segundos que durará el benchmark aunque no se completen todas
+	las peticiones, en este caso 60.
+	\item \texttt{-p archivo} para hacer peticiones de POST de un archivo.
+	\item \texttt{-u archivo} para hacer peticiones de PUT de un archivo.
+	\item \texttt{-T content-type} indica el header para POST y PUT, es obligatorio si se usa alguna de las dos opciones anteriores.
+\end{itemize}
+
+\section{Análisis comparativo de distintos balanceadores}
+
+En la siguiente tabla recogemos las peticiones por segundo de cada balanceador con cada algoritmo para un benchmark
+como el anterior, con 10000 peticiones y concurrencia 10.
+
+Cabe destacar que no estamos seguros de que Pound haga Round Robin por defecto. De hecho sospecho que no, puesto que
+a veces nos atiende dos veces seguidas la misma máquina. Por tanto, el nombre de la columna Round Robin debería ser
+Predeterminado.
+
+También para Pound utilizamos Session en lugar de IP-Hash,
+ambos comparten el objetivo de que varias peticiones de la misma IP sean atendidas por la misma máquina.
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|c|c|c|}
+		\hline
+		\multicolumn{1}{|l|}{peticiones/s} & \multicolumn{1}{l|}{Round-Robin} & \multicolumn{1}{l|}{IP-Hash / Session} \\ \hline
+		NGINX                              & 1946.2                           & 2119.05                                \\ \hline
+		HAProxy                            & 1666.1                           & 1718.69                                \\ \hline
+		Pound                              & 1259                             & 1185.1                                 \\ \hline
+	\end{tabular}
+\end{table}
+
+TODO: session mucho más lento que IP-Hash
+TODO: grafico de barras
 
 \section{Balanceo de carga con Gobetween}
 
