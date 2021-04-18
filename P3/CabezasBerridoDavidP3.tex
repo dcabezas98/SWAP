@@ -443,6 +443,79 @@ Por último, introduciremos algunas opciones y parámetros de Apache Benchmark q
 	\item \texttt{-T content-type} indica el header para POST y PUT, es obligatorio si se usa alguna de las dos opciones anteriores.
 \end{itemize}
 
+\section{Balanceo de carga con Gobetween}
+
+Instalamos Gobetween desde la Snap Store de Ubuntu, que viene instalada y habilitada por defecto.
+\begin{Verbatim}[tabsize=4]
+sudo snap install gobetween --edge
+\end{Verbatim}
+
+Como lo hemos instalado desde Snap, tenemos que invocarlo con
+\begin{Verbatim}[tabsize=4]
+/snap/gobetween/current/bin/gobetween
+\end{Verbatim}
+
+Creamos un fichero de configuración en \texttt{/snap/gobetween/gobetween-cfg.toml}.
+\begin{Verbatim}[tabsize=4]
+[servers.sample]
+bind = "192.168.56.103:80"
+protocol = "tcp"
+balance = "roundrobin"
+
+max_connections = 10000
+client_idle_timeout = "10m"
+backend_idle_timeout = "10m"
+backend_connection_timeout = "2s"
+
+[servers.sample.discovery]
+kind = "static"
+static_list = [
+	"192.168.56.101:80",
+	"192.168.56.102:80"
+]
+
+[servers.sample.healthcheck]
+fails = 1
+passes = 1
+interval = "2s"
+kind = "ping"
+ping_timeout_duration = "500ms"
+\end{Verbatim}
+Ahora lo lanzamos con el siguiente comando, y efectivamente funciona. Hemos necesitado lanzarlo con sudo porque
+se le denegaba el acceso de escucha en el puerto 80.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=160mm]{imgs/gobetween}
+	\caption{Lanzamos Gobetween indicando el fichero de configuración.}
+	\label{fig:gobetween}
+\end{figure}
+
+El parámetro balance indica el algoritmo para distribuir la carga, también puede ser \texttt{iphash} (IP-Hash),
+\texttt{leastconn} (menor número de conexiones) o \texttt{weight} (ponderaciones). Este último nos obliga a escribir la
+lista de servidores con el siguiente formato.
+\begin{Verbatim}[tabsize=4]
+[servers.sample.discovery]
+kind = "static"
+static_list = [
+	"192.168.56.101:80 weight=2",
+	"192.168.56.102:80 weight=1"
+]
+\end{Verbatim}
+
+En el último bloque del fichero de configuración sirve para hacer comprobaciones del estado de los servidores.
+En este caso, el balanceador hará \texttt{ping} cada dos segundos, y se espera una respuesta del servidor en 500
+milisegundos. Tras un fallo (parámetro \texttt{fails}), se marca el servidor como DOWN, pero se siguen enviando pings
+por si en algún momento se recibe respuesta. Con una respuesta (parámetro \texttt{passes}) se vuelve a marcar el
+servidor como OK.
+
+\section{Balanceo de carga con Zevenet}
+
+TODO: adaptadores, seleccionar host-only el bueno durante instalación
+TODO: configuraciones en puerto 4444
+
+m4zevenet.org
+
 \section{Análisis comparativo de distintos balanceadores}
 
 En la siguiente tabla recogemos las peticiones por segundo de cada balanceador con cada algoritmo para un benchmark
@@ -463,23 +536,11 @@ ambos comparten el objetivo de que varias peticiones de la misma IP sean atendid
 		NGINX                              & 1946.2                           & 2119.05                                \\ \hline
 		HAProxy                            & 1666.1                           & 1718.69                                \\ \hline
 		Pound                              & 1259                             & 1185.1                                 \\ \hline
+		Gobetween                            & 1421.19                  & 1364.69                                \\ \hline
 	\end{tabular}
 \end{table}
 
 TODO: session mucho más lento que IP-Hash
 TODO: grafico de barras
-
-\section{Balanceo de carga con Gobetween}
-
-Primero instalamos \href{https://golang.org/}{Go} 1.15 siguiendo estas instrucciones:
-\href{https://tecadmin.net/install-go-on-ubuntu/}{https://tecadmin.net/install-go-on-ubuntu/},
-es necesario para la instalación.
-
-Instalamos el balanceador desde la terminal, nos vamos a \texttt{/etc/} y ejecutamos
-\begin{Verbatim}[tabsize=4]
-sudo git clone https://github.com/yyyar/gobetween.git
-cd gobetween
-sudo -E make install
-\end{Verbatim}
 
 \end{document}
