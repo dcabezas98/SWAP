@@ -511,36 +511,119 @@ servidor como OK.
 
 \section{Balanceo de carga con Zevenet}
 
-TODO: adaptadores, seleccionar host-only el bueno durante instalación
-TODO: configuraciones en puerto 4444
+Descargamos la ISO de Zevenet Community Edition desde la \href{https://www.zevenet.com/products/community/}{web oficial} y lo instalamos en una máquina virtual
+con Ubuntu 64b, también con doble adaptador de red.
 
-m4zevenet.org
+Durante la instalación, es importante marcar la interfaz correspondiente a la red local.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=120mm]{imgs/zev-install-adapter}
+\end{figure}
+
+También nos obliga a configurar la red. Nos pide IP, gateway, mask, server name y domain name. Esto no es importante,
+lo configuramos con Netplan una vez finalizada la instalación.
+
+\begin{Verbatim}[tabsize=4]
+network:
+	version: 2
+	ethernets:
+		enp0s3:
+			dhcp4: true
+		enp0s8:
+			dhcp4: true
+\end{Verbatim}
+
+Ahora comprobamos la dirección asignada con \texttt{ifconfig}.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=100mm]{imgs/zev-ifconfig}
+	\caption{192.168.56.106}
+\end{figure}
+
+Nos vamos al puerto 444 para hacer las configuraciones. Aquí nos logueamos como root con la contraseña de root
+que elegimos durante la instalación, en mi caso \emph{Swap1234}. Nos encontramos el Dashboard.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=170mm]{imgs/zev-dashboard}
+	\caption{Dashboard de Zevenet. En la parte inferior ya aparece una granja configurada, a continuación explicamos cómo hacerlo.}
+\end{figure}
+
+Primero ponemos una VIP para la red doméstica. Vamos a \texttt{Network -> \ NIC} y editamos \texttt{enp0s8} para que
+quede de esta forma.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=160mm]{imgs/zev-nic}
+\end{figure}
+
+Seguidamente, en \texttt{LSLB -> \ Farms} creamos una nueva graja web con la siguiente configuración.
+Aquí se pueden modificar los timeouts y los mensajes de error entre otras opciones.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=160mm]{imgs/zev-farm}
+\end{figure}
+
+Finalmente, creamos
+el servicio \texttt{index} con M1 y M2 como backends. Aquí se asignan también las ponderaciones.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=160mm]{imgs/zev-service}
+\end{figure}
+
+Ya tenemos el balanceador funcionando. Para activar la persistencia según la IP del cliente lo marcamos en la
+pestaña del servicio, funciona de igual modo que Session en Pound. En Farmguardian tenemos comprobaciones del estado
+de los backends.
 
 \section{Análisis comparativo de distintos balanceadores}
 
 En la siguiente tabla recogemos las peticiones por segundo de cada balanceador con cada algoritmo para un benchmark
 como el anterior, con 10000 peticiones y concurrencia 10.
 
-Cabe destacar que no estamos seguros de que Pound haga Round Robin por defecto. De hecho sospecho que no, puesto que
-a veces nos atiende dos veces seguidas la misma máquina. Por tanto, el nombre de la columna Round Robin debería ser
-Predeterminado.
+Cabe destacar que no estamos seguros de que Pound haga Round Robin por defecto. De hecho, a veces nos atiende dos veces seguidas la misma máquina. Lo mismo le ocurre a Zevenet.
+ Por tanto, el nombre de la columna será Predeterminado en lugar de Round Robin.
 
-También para Pound utilizamos Session en lugar de IP-Hash,
-ambos comparten el objetivo de que varias peticiones de la misma IP sean atendidas por la misma máquina.
+Para la persistencia, utilizamos Session en Pound (que no es lo mismo que IP-Hash), y marcamos
+\texttt{Persistence -> \ IP: Client address} para Zevenet, que funciona de la misma manera.
+Para el resto utilizamos IP-Hash.
 
 \begin{table}[H]
 	\centering
 	\begin{tabular}{|c|c|c|}
 		\hline
-		\multicolumn{1}{|l|}{peticiones/s} & \multicolumn{1}{l|}{Round-Robin} & \multicolumn{1}{l|}{IP-Hash / Session} \\ \hline
+		\multicolumn{1}{|l|}{peticiones/s} & \multicolumn{1}{l|}{Predeterminado} & \multicolumn{1}{l|}{Persistencia} \\ \hline
 		NGINX                              & 1946.2                           & 2119.05                                \\ \hline
 		HAProxy                            & 1666.1                           & 1718.69                                \\ \hline
 		Pound                              & 1259                             & 1185.1                                 \\ \hline
-		Gobetween                            & 1421.19                  & 1364.69                                \\ \hline
+		Gobetween                          & 1421.19                  & 1364.69                                \\ \hline
+		Zevenet                            & 1552.4                  & 1621.64                              \\ \hline
 	\end{tabular}
 \end{table}
 
-TODO: session mucho más lento que IP-Hash
-TODO: grafico de barras
+Representamos los resultados en un gráfico de barras para facilitar la comparación.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=140mm]{imgs/grafico}
+\end{figure}
+
+Antes de comentar las diferencias en las configuraciones, está claro que para el benchmark realizado lo que más destaca
+es la diferencia entre los propios balanceadores. NGINX consigue las mejores prestaciones con diferencia, HAProxy es el
+siguiente más rápido seguido por Zevenet. Después tenemos a Gobetween, algo más lento. Y finalmente a Pound, el más
+lento con diferencia.
+
+Respecto a las configuraciones, la persistencia obtiene mejores resultados en los más rápidos: NGINX y HAProxy, que
+usan IP-Hash, GNINX experimenta la mayor mejora. En el caso de Gobetween, la persistencia con IP-Hash deteriora ligeramente
+la rapidez del balanceador. Las sesiones, sin embargo, empeoran ligeramente a Pound y mejora ligeramente a Zevenet.
+
+Esto no permite sacar conclusiones infalibles sobre la idoneidad de la persistencia en forma de IP-Hash o sesiones, ya que dependen
+del balanceador. Sin embargo, basándonos en los resultados de este benchmark, la persistencia supone una mejora en el
+desempeño de los balanceadores más rápidos, especialmente IP-Hash con NGINX. Por tanto, si tuviésemos que seleccionar un
+ balanceador para nuestra granja basándonos únicamente en los resultados sobre este benchmark, elegiríamos NGINX sin duda,
+ y confiaríamos en IP-Hash como algoritmo de reparto de la carga.
 
 \end{document}
