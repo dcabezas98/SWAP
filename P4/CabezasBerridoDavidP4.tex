@@ -62,6 +62,8 @@
 
 \section{Instalar un certificado SSL autofirmado para configurar el acceso por HTTPS}
 
+Toda esta sección la haremos en la máquina 1.
+
 Para habilitar el módulo SSL de Apache2, ejecutamos la siguiente línea.
 
 \begin{Verbatim}[tabsize=4]
@@ -106,8 +108,8 @@ SSLCertificateKeyFile /etc/apache2/ssl/apache_dxabezas.key
 \end{Verbatim}
 También tenemos que comentar las líneas que sobreescriben estas directivas más abajo. Guardamos los cambios y ejecutamos
 \begin{Verbatim}[tabsize=4]
-a2ensite default-ssl
-service apache2 reload
+sudo a2ensite default-ssl
+sudo service apache2 reload
 \end{Verbatim}
 
 Cuando accedemos a la página, nos avisa de que es insegura porque el certificado es auto-firmado. Debemos permitir la excepción en
@@ -137,6 +139,95 @@ es la misma: ``xxj31ZMTZzkVA'' (que es una encriptación por DES de la palabra `
 
 \section{Configurar la granja web para que permita HTTPS}
 
+Primero replicamos la configuración en la máquina 2. En lugar de crear un nuevo certificado, copiamos el de M1.
+Desde M1:
+\begin{Verbatim}
+sudo scp /etc/apache2/ssl/apache_dxabezas.crt dxabezas@192.168.56.102:/home/dxabezas/apache_dxabezas.crt
+sudo scp /etc/apache2/ssl/apache_dxabezas.key dxabezas@192.168.56.102:/home/dxabezas/apache_dxabezas.key
+\end{Verbatim}
+
+Ahora desde M2:
+\begin{Verbatim}
+sudo mkdir /etc/apache2/ssl
+sudo mv /home/dxabezas/apache_dxabezas.* /etc/apache2/ssl/
+sudo a2enmod ssl & sudo service apache2 restart
+sudo nano /etc/apache2/sites-available/default-ssl.conf
+\end{Verbatim}
+
+Escribimos las líneas 
+\begin{Verbatim}
+SSLCertificateFile /etc/apache2/ssl/apache_dxabezas.crt
+SSLCertificateKeyFile /etc/apache2/ssl/apache_dxabezas.key
+\end{Verbatim}
+y comentamos las equivalentes que ya había. Terminamos con 
+\begin{Verbatim}[tabsize=4]
+sudo a2ensite default-ssl
+sudo service apache2 reload
+\end{Verbatim}
+
+Cuando nos conectamos a M2 desde el navegador por HTTPS obtenemos el mismo resultado, y también podemos visualizar el mismo
+certificado.
+
+Falta configurar M3. Otra vez desde M1 copiamos el certificado:
+
+\begin{Verbatim}
+sudo scp /etc/apache2/ssl/apache_dxabezas.crt dxabezas@192.168.56.103:/home/dxabezas/apache_dxabezas.crt
+sudo scp /etc/apache2/ssl/apache_dxabezas.key dxabezas@192.168.56.103:/home/dxabezas/apache_dxabezas.key
+\end{Verbatim}
+
+Y desde M3:
+\begin{Verbatim}
+mv apache_dxabezas.* ssl/
+sudo nano /etc/nginx/conf.d/default.conf
+\end{Verbatim}
+
+Y creamos un nuevo server como se indica en el guión:
+
+\begin{Verbatim}[tabsize=4]
+server {
+	listen 443 ssl;
+	ssl on;
+	ssl_certificate         /home/dxabezas/ssl/apache_dxabezas.crt;
+	ssl_certificate_key     /home/dxabezas/ssl/apache_dxabezas.key;
+	server_name balanceador_dxabezas;
+	access_log /var/log/nginx/balanceador_dxabezas.access.log;
+	error_log /var/log/nginx/balanceador_dxabezas.error.log;
+	root /var/www/;
+	
+	location /
+	{
+		proxy_pass http://balanceo_dxabezas;
+		proxy_set_header Host $host;
+		proxy_set_header X-Real-IP $remote_addr;
+		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+		proxy_http_version 1.1;
+		proxy_set_header Connection "";
+	}
+}
+\end{Verbatim}
+Tras restaurar NGINX, podemos acceder desde el navegador por HTTPS a la IP de M3 de la misma forma que hacíamos con
+M1 y M2 (se marca como insegura y hay que añadir una excepción). Una vez entramos, M1 y M2 se turnan para servirnos
+su \texttt{index.html}. También podemos ver el mismo certificado tal y como hacíamos antes.
+
+Al igual que antes, todas las máquinas aceptan también tráfico HTTP.
+
+Como opciones avanzadas, comentaremos \href{http://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_protocols}{protocolos} y 
+\href{http://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_ciphers}{cifrados} para SSL. 
+
+Dentro del archivo de configuración del server (NGINX), la directiva \texttt{ssl\_protocols} limita las conexiones a las compatibles con
+las versiones de SSL y TLS que indiquemos de la siguiente lista: SSLv2, SSLv3, TLSv1, TLSv1.1, TLSv1.2, TLSv1.3.
+Por defecto, las versiones que se aceptan son las de este ejemplo:
+\begin{Verbatim}
+ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+\end{Verbatim}
+
+Igualmente, la directiva \texttt{ssl\_ciphers} limita las conexiones a las compatibles con los sistemas de cifrado que se especifiquen,
+deben escribirse en un formato entendiblel por OpenSSL, por ejemplo:
+\begin{Verbatim}
+ssl_ciphers ALL:!aNULL:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP;
+\end{Verbatim}
+
+\section{Cortafuegos \emph{iptables}}
 
 
 \end{document}
