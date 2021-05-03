@@ -227,7 +227,74 @@ deben escribirse en un formato entendiblel por OpenSSL, por ejemplo:
 ssl_ciphers ALL:!aNULL:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP;
 \end{Verbatim}
 
+\section{Certificados para Apache y NGINX con Certbot}
+
+Instalamos Certbot en M1 y M3 con
+\begin{Verbatim}
+sudo apt install certbot
+\end{Verbatim}
+
+\subsection{Certificado para Apache}
+
+Es necesario instalar el plugin de Apache en M1. Ejecutamos:
+\begin{Verbatim}
+sudo apt install python-certbot-apache
+\end{Verbatim}
+
+Ahora, siguiendo las instrucciones de \href{https://certbot.eff.org/lets-encrypt/ubuntubionic-apache}{esta página},
+podemos obtener e instalar un certificado utilizando la siguiente orden.
+\begin{Verbatim}
+sudo certbot --apache
+\end{Verbatim}
+
+Nos pide algunos datos que debemos rellenar.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=160mm]{imgs/certbot-apache}
+	\caption{Rellenamos los datos para generar e instalar un certificado para que un sitio web acepte tráfico HTTPS.
+	Este comando genera el certificado y realiza la configuración necesaria.}
+	\label{fig:certbot-apache}
+\end{figure}
+
+Sin embargo, Certbot sólo genera certificados para nombres de dominio, lo que dificulta en gran medida que llevemos esto a la práctica.
+
+Como opciones avanzadas, en la misma página explica qué debemos hacer si sólo queremos generar el certificado y queremos llevar a
+cabo la configuración a mano.
+\begin{Verbatim}
+sudo certbot certonly --apache 
+\end{Verbatim}
+También es interesante comentar que por defecto Certbot instala un comando Crontab que renueva los certificados automáticamente.
+En nuestro caso, nos ha creado el siguiente archivo.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=140mm]{imgs/renew-crontab}
+	\label{fig:renew-crontab}
+\end{figure}
+
+\subsection{Certificado para NGINX}
+
+Primero primero instalamos (en M3) el plugin de NGINX.
+
+\begin{Verbatim}
+sudo apt install python-certbot-nginx
+\end{Verbatim}
+
+Ahora, siguiendo las instrucciones de \href{https://certbot.eff.org/lets-encrypt/ubuntubionic-nginx}{esta página}, ejecutamos:
+\begin{Verbatim}
+sudo certbot --nginx
+\end{Verbatim}
+Y nos pide los mismos datos que para el de Apache.
+
+También podemos usar 
+\begin{Verbatim}
+sudo certbot certonly --nginx 
+\end{Verbatim}
+si sólo queremos generar el certificado para configurarlo manualmente.
+
 \section{Cortafuegos \emph{iptables}}
+
 
 
 \end{document}
