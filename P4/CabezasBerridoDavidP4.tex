@@ -275,7 +275,7 @@ En nuestro caso, nos ha creado el siguiente archivo.
 
 \subsection{Certificado para NGINX}
 
-Primero primero instalamos (en M3) el plugin de NGINX.
+Primero instalamos (en M3) el plugin de NGINX.
 
 \begin{Verbatim}
 sudo apt install python-certbot-nginx
@@ -295,6 +295,191 @@ si sólo queremos generar el certificado para configurarlo manualmente.
 
 \section{Cortafuegos \emph{iptables}}
 
+\textbf{Nota:} Las IP de las máquinas 1 y 2 son 192.168.56.102 y 192.168.56.101 en lo que sigue.
 
+El cortafuegos \emph{iptables} ya viene instalado en todas las máquinas.
+
+Para configurarlo debemos escribir primero las reglas más generales y después las más específicas, ya que
+tiene prioridad la última regla que se ejecuta (como es lógico). Comenzamos con un script que es equivalente
+a desactivar el cortafuegos, borra todas las reglas y permite todo el tráfico.
+
+\begin{Verbatim}
+#!/bin/sh
+
+# off.sh
+# Eliminar todas las reglas, permitir todo el tráfico
+
+iptables -F
+iptables -X
+iptables -Z
+iptables -t nat -F
+iptables -t nat -X
+iptables -t nat -Z
+iptables -t mangle -F
+iptables -t mangle -X
+iptables -t mangle -Z
+
+iptables -P INPUT ACCEPT
+iptables -P OUTPUT ACCEPT
+iptables -P FORWARD ACCEPT
+\end{Verbatim}
+
+Una cadena es una lista de reglas que se aplican a una serie de paquetes.
+
+La opción \texttt{-F} elimina todas las reglas de todas las cadenas (ya que no se ha especificado
+ninguna cadena en contreto), \texttt{-X} elimina las cadenas y \texttt{-Z} pone a cero los contadores de bytes
+transmitidos.
+
+La opción \texttt{-t} indica la tabla a usar. Las distintas tablas (presentes en la configuración por defecto)
+pueden encontrarse en \href{https://linux.die.net/man/8/iptables}{el manual}. Si no se indica nada, se trabaja
+con la tabla \texttt{filter}, que cuenta (si no se añaden más) con tres cadenas (no se borran con -X): INPUT,
+FORWARD y OUPUT. Cada tipo de paquete cae en una tabla y una cadena.
+
+La opción \texttt{-P} sirve para establecer una política para una cadena.
+
+Ahora presentamos un script que deniega todo el tráfico.
+
+\begin{Verbatim}
+#!/bin/sh
+
+# denegacion.sh
+# Denegación de todo el tráfico
+
+iptables -P INPUT DROP
+iptables -P OUTPUT DROP
+iptables -P FORWARD DROP
+\end{Verbatim}
+
+El siguiente script contiene la configuración básica de un sitio web. Denegando todo el tráfico
+excepto en los puertos correspondientes de los servicios que queremos mantener activos: SSH, HTTP y HTTPS.
+
+\begin{Verbatim}
+#!/bin/sh
+
+# basic.sh
+# Configuración básica de un sitio web
+# Denegar todo excepto SSH, HTTP y HTTPS
+
+# 1: Eliminar todas las reglas y permitir todo el tráfico, configuración limpia
+./off.sh
+
+# 2: Denegación implícita
+./denegacion.sh
+
+# 3: Permitir conexiones, puesto que somos un servidor web
+iptables -A INPUT -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+
+# 4: Permitir acceso desde localhost (interface lo):
+iptables -A INPUT -i lo -j ACCEPT
+iptables -A OUTPUT -o lo -j ACCEPT
+
+# 5: Abrir puerto 22 para permitir el acceso por SSH
+iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+iptables -A OUTPUT -p tcp --sport 22 -j ACCEPT
+
+# 6: Permitir tráfico por el puerto 80 (HTTP)
+iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+iptables -A OUTPUT -p tcp --sport 80 -j ACCEPT
+
+# 7: Permitir tráfico por el puerto 443 (HTTPS)
+iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+iptables -A OUTPUT -p tcp --sport 443 -j ACCEPT
+\end{Verbatim}
+
+La opción \texttt{-A} añade nuevas reglas a una cadena. Por ejemplo, los paquetes entrantes (INPUT), transmitidos
+por protocolo (opción \texttt{-p}) TCP con puerto de destino (\texttt{--dport}) 22 caerían en la regla debajo de
+\#5.
+La opción \texttt{-m state} indica que el estado debe ser uno de los especificados,
+y la opción \texttt{-j} indica la acción a aplicar a los paquetes que correspondan con la regla (ACCEPT, DROP, REJECT,\ldots)
+Las opciones \texttt{-i} y \texttt{-o} indican las interfaces de entrada y salida respectivamente.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=140mm]{imgs/basic}
+	\caption{Con esta configuración, la máquina 1 acepta tráfico SSH (no mostrado), HTTP y HTTPS, pero observamos
+	que responde a un PING.}
+	\label{fig:basic}
+\end{figure}
+
+Sólo tenemos que copiar este script en las distintas máquinas, y ya tenemos nuestra configuración básica.
+\begin{Verbatim}
+scp * dxabezas@192.168.56.101:/home/dxabezas/.iptables/
+\end{Verbatim}
+Ya lo tenemos también en M2, y 192.168.56.103 para M3. Hay que crear el directorio primero y desactivar el
+cortafuegos, ya que la configuración que hemos hecho no permite que la máquina establezca conexiones por SSH, sólo que las reciba.
+También se podría añadir la línea
+\begin{Verbatim}
+iptables -A OUTPUT -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+\end{Verbatim}
+en el bloque \#3, para que las máquinas puedan abrir conexiones.
+
+Como opciones avanzadas, para aceptar también tráfico DNS basta con abrir el puerto 53. La segunda propuesta es
+más interesante, vamos a configurar M1 y M2 para que sólo acepten peticiones de M3. Para ello, hay que modificar
+los bloques \#6 y \#7 y añadir las opciones \texttt{-s} (source) en los entrantes y \texttt{-d} (destination)
+en los salientes.
+
+\begin{Verbatim}
+# 6: Permitir tráfico por el puerto 80 (HTTP) sólo de M3
+iptables -A INPUT -p tcp --dport 80 -s 192.168.56.103 -j ACCEPT
+iptables -A OUTPUT -p tcp --sport 80 -d 192.168.56.103 -j ACCEPT
+
+# 7: Permitir tráfico por el puerto 443 (HTTPS) sólo de M3
+iptables -A INPUT -p tcp --dport 443 -s 192.168.56.103 -j ACCEPT
+iptables -A OUTPUT -p tcp --sport 443 -d 192.168.56.103 -j ACCEPT
+\end{Verbatim}
+
+Después de copiar el script a M2 y aplicar las reglas, la granja sigue funcionando sin problema. Sin embargo, no se obtiene
+respuesta al conectarse desde el anfitrión.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=140mm]{imgs/timed-out}
+	\caption{Ya no podemos hacer peticiones directamente a los servidores finales, hay que usar al balanceador
+		como intermediario.}
+	\label{fig:timed-out}
+\end{figure}
+
+También permitiremos que nuestras máquinas puedan enviar y recibir PINGS, ahora mismo no responden (como se ve
+en la Figura \ref{fig:basic}) y tampoco envían (como se ve en la siguiente figura).
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=140mm]{imgs/no-ping}
+	\caption{No se pueden enviar pings.}
+	\label{fig:no-ping}
+\end{figure}
+
+Las siguientes reglas habilitan los PINGS.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=160mm]{imgs/ping}
+	\caption{Ya se pueden enviar y recibir PINGS.}
+	\label{fig:ping}
+\end{figure}
+
+Finalmente, mostramos como hacer que la configuración del cortafuegos se ejecute al arranque del sistema.
+Hay dos formas de conseguir esto. La primera es añadir la ejecución del script con las reglas al fichero
+\texttt{.bashrc}, de tal forma que esta configuración se aplica al arranque del sistema.
+
+Otra forma de conseguir esto es la herramienta \texttt{iptables-persistent}. La instalamos con \\
+\verb^sudo apt install iptables-persistent^ (no podemos acceder a internet con el cortafuegos activado).
+
+Nos pregunta si queremos salvar la configuración actual como permanente.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=160mm]{imgs/iptables-persistent}
+	\label{fig:iptables-persistent}
+\end{figure}
+
+Podemos actualizar las reglas mediante los siguientes comandos, que salvan la
+configuración actual de \emph{iptables} como permanente (tras el arranque). Hay un fichero para IPv4 y otro
+para IPv6.
+\begin{Verbatim}
+# iptables-save > /etc/iptables/rules.v4
+# ip6tables-save > /etc/iptables/rules.v6
+\end{Verbatim}
+(He necesitado hacerlo como root, no podía con sudo).
 
 \end{document}
