@@ -66,6 +66,11 @@ Es importante desactivar el cortafuegos antes de hacer la configuración de maes
 cortafuegos en
 todas las máquinas ejecutando el script \texttt{off.sh} de la práctica anterior (para \emph{iptables}) y también \verb|sudo ufw disable| (para UFW).
 
+Como hicimos las reglas de \emph{iptables} permanentes, también ejecutamos (desde root)
+\begin{Verbatim}
+# iptables-save > /etc/iptables/rules.v4
+\end{Verbatim}
+
 \section{Base de datos MySQL}
 
 Creamos la base de datos, la tabla e insertamos una tupla tal y como se describe en el guión.
@@ -79,7 +84,8 @@ añadiendo \texttt{NOT NULL} detás del tipo del campo. Además, a la hora de in
 	\centering
 	\includegraphics[width=120mm]{imgs/mydb}
 	\caption{Tenemos una tupla en la tabla que hemos creado. En la descripción de la tabla podemos ver los distintos
-	campos y el tipo de cada uno. Nos fijamos que el campo usuario no puede ser nulo.}
+	campos y el tipo de cada uno. Nos fijamos que el campo usuario no puede ser nulo (obtendremos un error si intentamos introducir
+	una tupla con valor nulo para este atributo).}
 	\label{fig:mydb}
 \end{figure}
 
@@ -98,6 +104,29 @@ Ahora desde bash copiamos la base de datos a un archivo con
 \begin{Verbatim}
 sudo mysqldump estudiante -u root > /tmp/estudiante.sql
 \end{Verbatim}
-Después volvemos a entrar a MySQL y desbloqueamos las tablas con \verb|unlock tables;|.
+Después volvemos a entrar a MySQL y desbloqueamos las tablas con \verb|unlock tables;|. 
+
+Copiamos el archivo a la máquina 2 (IP 192.168.56.101) con:
+\begin{Verbatim}
+sudo scp /tmp/estudiante.sql dxabezas@192.168.56.101:/tmp/estudiante.sql
+\end{Verbatim}
+
+A continuación, desde M2 creamos la base de datos al igual que hemos hecho en M1 (como se describe en el guión) y recuperamos
+la copia con 
+\begin{Verbatim}
+sudo mysql -u root estudiante < /tmp/estudiante.sql
+\end{Verbatim}
+Si entramos a MySQL, podemos obtener el mismo resultado que en la Figura \ref{fig:mydb} (ahora en M2).
+
+En el manual encontramos algunas opciones avanzadas que pueden ser útiles. Si tenemos varias bases de datos, podemos especificar
+(tanto al copiar como restaurar)
+las que queremos copiar con la opción \texttt{--databases <nombre-db1> <nombre-db2> \ldots} o usar \texttt{--all-databases} para
+copiarlas todas. También podemos ahorrarnos tener que bloquear las tablas añadiendo la opción \texttt{--lock-all-tables} en el
+\texttt{mysqldump} (para bloquear todas las tablas de todas las bases de datos) o simplemente \texttt{--lock-tables} para bloquear
+sólo las tablas que copiamos. También podemos omitir las copias de algunas tablas con \texttt{--ignore-table=estudiante.datos} (en general, \texttt{<nombre db>.<nombre tabla>}) y omitir el contenido (las tuplas) de las tablas y copiar sólo la estructura con \texttt{--no-data}.
+
+\section{Replcar la BD mediante configuración maestro-esclavo}
+
+
 
 \end{document}
