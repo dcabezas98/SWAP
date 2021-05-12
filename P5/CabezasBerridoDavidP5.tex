@@ -125,8 +125,114 @@ copiarlas todas. También podemos ahorrarnos tener que bloquear las tablas añad
 \texttt{mysqldump} (para bloquear todas las tablas de todas las bases de datos) o simplemente \texttt{--lock-tables} para bloquear
 sólo las tablas que copiamos. También podemos omitir las copias de algunas tablas con \texttt{--ignore-table=estudiante.datos} (en general, \texttt{<nombre db>.<nombre tabla>}) y omitir el contenido (las tuplas) de las tablas y copiar sólo la estructura con \texttt{--no-data}.
 
-\section{Replcar la BD mediante configuración maestro-esclavo}
+\section{Replicar la BD mediante configuración maestro-esclavo}
 
+\subsubsection*{Configuración de MySQL del maestro (M1)}
 
+Editamos como root el archivo \texttt{/etc/mysql/mysql.conf.d/mysqld.cnf} como se indica en el guión:
+\begin{itemize}
+	\item Comentamos \texttt{\#bind-address 127.0.0.1}.
+	\item \texttt{log\_error = /var/log/mysql/error.log} (donde se almacena el log de errores).
+	\item \texttt{server-id = 1}.
+	\item \texttt{log\_bin = /var/log/mysql/bin.log} (donde se almacenan los binarios con la información).
+\end{itemize}
+
+Reiniciamos el servicio, todo parece estar correcto.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=170mm]{imgs/m1-mysql-restart}
+\end{figure}
+
+\subsubsection*{Configuración de MySQL del esclavo (M2)}
+Hacemos las mismas configuraciones, pero con \texttt{server-id = 2}. Reiniciamos y comprobamos que también parece correcto.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=170mm]{imgs/m2-mysql-restart}
+\end{figure}
+
+\subsubsection*{Configuración de MySQL del maestro (M1)}
+
+Volvemos a M1, entramos a MySQL y creamos un usuario esclavo con los permisos necesarios para realizar la replicación y
+bloqueamos las tablas.
+\begin{Verbatim}
+dxabezas@m1-dxabezas:~$ sudo mysql -u root
+
+mysql> create user esclavo_dxabezas identified by 'esclavo_dxabezas';
+mysql> grant replication slave on *.* to 'esclavo_dxabezas'@'%' identified by 'esclavo_dxabezas';
+mysql> flush privileges;
+mysql> flush tables;
+mysql> flush tables with read lock;
+\end{Verbatim}
+
+A continuación, mostramos el estado del maestro.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=150mm]{imgs/master-status}
+\end{figure}
+Estos datos son relativos a los ficheros de \texttt{log\_bin = /var/log/mysql/bin.log}, y cambian cuando
+se realizan modificaciones. Por tanto, NO debemos tocar la base de datos hasta que no completemos la configuración.
+
+\subsubsection*{Configuración de MySQL del esclavo (M2)}
+
+Entramos a MySQL en M2, le damos los datos del maestro y arrancamos el esclavo.
+\begin{Verbatim}[tabsize=7]
+dxabezas@m2-dxabezas:~$ sudo mysql -u root
+
+mysql> change master to master_host='192.168.56.102',
+	master_user='esclavo_dxabezas', master_password='esclavo_dxabezas',
+	master_log_file='mysql-bin.000002', master_log_pos=998, master_port=3306;
+	
+mysql> start slave;
+\end{Verbatim}
+
+\subsubsection*{Configuración de MySQL del maestro (M1)}
+Volvemos una vez más a M1 para activar las tablas con
+\begin{Verbatim}
+dxabezas@m1-dxabezas:~$ sudo mysql -u root
+
+mysql> unlock tables;
+\end{Verbatim}
+
+\subsubsection*{Configuración de MySQL del esclavo (M2)}
+Comprobamos el estado del esclavo.
+\begin{Verbatim}
+dxabezas@m2-dxabezas:~$ sudo mysql -u root
+
+mysql> show slave status\G;
+\end{Verbatim}
+Observamos que aparece \texttt{Seconds\_Behind\_Master: 0} y todos los marcadores de errores estan a 0 o son vacíos
+(\texttt{Last\_SQL\_Error, Last\_IO\_Error, Last\_Error,\ldots}). Así que nos disponemos a probar la configuración introduciendo
+nuevos datos en el maestro para ver si el esclavo los replica.
+
+En M1, introducimos una nueva tupla.
+\begin{Verbatim}
+mysql> use estudiante;
+mysql> insert into datos values("Pepe","Lopez","pepelopez","pepelopez@correo.ugr.es");
+\end{Verbatim}
+Y comprobamos que se ha añadido también en M2.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=140mm]{imgs/m2-master-slave}
+	\caption{Base de datos de M2 tras añadir la tupla en M1.}
+\end{figure}
+
+Si nos fijamos, el estado del maestro ha cambiado.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=150mm]{imgs/master-status2}
+\end{figure}
+Aunque los ficheros sean binarios, observamos secuencias relacionadas con las modificaciones que acabamos de hacer.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=170mm]{imgs/cat-bins}
+\end{figure}
+
+\section{Configurar \emph{iptables} para el puerto 3306}
+
+TODO
+
+\section{Replicar la BD mediante configuración maestro-maestro}
+
+TODO
 
 \end{document}
