@@ -227,12 +227,98 @@ Aunque los ficheros sean binarios, observamos secuencias relacionadas con las mo
 	\includegraphics[width=170mm]{imgs/cat-bins}
 \end{figure}
 
-\section{Configurar \emph{iptables} para el puerto 3306}
-
-TODO
-
 \section{Replicar la BD mediante configuración maestro-maestro}
 
-TODO
+Los servicios ya están configurados, y hay que repetir la creación del usuario esclavo, esta vez en M2, e indicárselo a M1.
+
+En M2, repetimos lo mismo que hicimos en su momento con M1:
+\begin{Verbatim}
+dxabezas@m2-dxabezas:~$ sudo mysql -u root
+
+mysql> create user esclavo_dxabezas identified by 'esclavo_dxabezas';
+mysql> grant replication slave on *.* to 'esclavo_dxabezas'@'%' identified by 'esclavo_dxabezas';
+mysql> flush privileges;
+mysql> flush tables;
+mysql> flush tables with read lock;
+\end{Verbatim}
+También mostramos el estado del maestro.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=150mm]{imgs/m2-master-status}
+\end{figure}
+
+En M1 indicamos los datos del maestro y lanzamos el esclavo.
+
+\begin{Verbatim}[tabsize=7]
+dxabezas@m1-dxabezas:~$ sudo mysql -u root
+
+mysql> change master to master_host='192.168.56.101',
+master_user='esclavo_dxabezas', master_password='esclavo_dxabezas',
+master_log_file='mysql-bin.000004', master_log_pos=998, master_port=3306;
+
+mysql> start slave;
+\end{Verbatim}
+
+Ya podemos desbloquear las tablas en M2.
+\begin{Verbatim}
+dxabezas@m2-dxabezas:~$ sudo mysql -u root
+
+mysql> unlock tables;
+\end{Verbatim}
+
+Cuando hacemos \verb|show slave status\G;| en M1, nos percatamos de que algún error está ocurriendo. M1 no está
+siendo capaz de conectarse a M2.
+\begin{figure}[H]
+	\centering
+	\subfigure{\includegraphics[width=160mm]{imgs/error}}
+	\subfigure{\includegraphics[width=80mm]{imgs/connecting-yes}}
+\end{figure}
+
+Parece que el error se debía a que el cortafuegos había vuelto a activarse por algún motivo (estuve tocándolo
+para para la siguiente sección). Sólo con desactivarlo y volver a pedir el estado, todo parece en orden.
+\begin{figure}[H]
+	\centering
+	\subfigure{\includegraphics[width=90mm]{imgs/0-seconds}}
+	\subfigure{\includegraphics[width=80mm]{imgs/yes-yes}}
+\end{figure}
+
+Ya estamos en condiciones de probarlo. Observamos que M1 replica las actualizaciones que realiza M2.
+La izquierda es M1 y la derecha M2).
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=180mm]{imgs/test-m2}
+\end{figure}
+
+De igual forma, M2 replica las modificaciones de M1, como ya hacía previamente.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=180mm]{imgs/test-m1}
+\end{figure}
+
+\section{Configurar \emph{iptables} para el puerto 3306}
+
+Es deseable que la configuración funcione sin la necesidad de cortar el cortafuegos. Por tanto, recuperamos las
+reglas de \emph{iptables} que configuramos en la práctica anterior (deniegan todo el tráfico salvo los servicios SHH,
+HTTP y HTTPS), con la excepción de que debemos abrir también el puerto 3306 para permitir el tráfico de MySQL.
+Además, aprovechamos para limitar estas conexiones sólo entre M1 y M2.
+
+Todo esto lo conseguimos añadiendo las siguientes reglas en el script de \emph{iptables}:
+
+Para M1 sólo aceptamos tráfico con M2 (192.168.56.101):
+\begin{Verbatim}
+iptables -A INPUT -p tcp -s 192.168.56.101 --dport 3306 -j ACCEPT
+iptables -A OUTPUT -p tcp -d 192.168.56.101 --sport 3306 -j ACCEPT
+\end{Verbatim}
+
+Para M2 sólo aceptamos tráfico con M1 (192.168.56.102):
+\begin{Verbatim}
+iptables -A INPUT -p tcp -s 192.168.56.102 --dport 3306 -j ACCEPT
+iptables -A OUTPUT -p tcp -d 192.168.56.102 --sport 3306 -j ACCEPT
+\end{Verbatim}
+
+Hemos encontrado un problema implementando esto y hemos descubierto que es importante poner la \textbf{IP antes que el puerto}
+para que funcione correctamente.
+
+Con esta configuración del cortafuegos, la replicación sigue funcionando correctamente.
 
 \end{document}
