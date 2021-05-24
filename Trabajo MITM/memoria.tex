@@ -71,6 +71,71 @@
 \tableofcontents
 \newpage
 
+\section{Introducción}
+
+Los ataques man-in-the-middel (MITM) son una clase de ciberataques en los que un individuo (el atacante) logra infiltrarse en una
+comunicación entre dos partes legítimas, de forma que ambas partes ignoran su presencia. Esto permite al atacante acceder a información
+de manera ilegítima, e incluso suplantar la identidad de alguno (o ambos) de los interlocutores y manipular el contenido de los mensajes.
+
+En esta memoria expondremos las características de este ataque, lo situaremos en su contexto histórico dentro del mundo de los ciberataques y la
+ ciberseguridad, y facilitaremos algunos de los ejemplos reales de este ataque más notables a lo largo de la historia.
+ 
+ También describiremos un método para comunicarse de forma segura evitando este tipo de ataque, el cifrado y firma de mensajes.
+ 
+Además, realizaremos una simulación de este ataque en una red local que crearemos.
+
+Finalmente, proporcionaremos una serie de consejos y buenas prácticas para evitar ser víctimas de este tipo de ataques.
+
+\section{Preliminares}
+
+El primer ataque MITM de la historia data del año 1903, y ocurrió durante una demostración del telégrafo inalámbrico de Marconi.
+El Profesor Fleming, un asesor de Marconi, presentaba en el Royal Institute la recepción de un mensaje transmitido por Marconi desde la estación de
+ Poldhu (a más de 400 kilómetros de distancia). Como la hora y el lugar de la demostración eran más que conocidos, el mago y fanático de la
+tecnología Nevil Maskelyne logró interceptar uno de los mensajes y sustituirlo por un mensaje satírico.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=90mm]{images/memoir/marconi-paper}
+	\caption{Recorte de periódico: Austin-American Statesman, 17 de julio de 1903.}
+\end{figure}
+
+Con la extensión del uso de los ordenadores, este tipo de ataques cobró mucha popularidad a partir de la década de los 70. Una de las
+primeras menciones a este tipo de ataques se encuentra en ``Software: A Qualitative Assessment, or The Man in the Middle Speaks Back'' (1973), por
+Gerald H. Larsen. Leslie Lamport, desarrollador inicial de \LaTeX, escribió sobre cómo protegerse de este tipo de ataques en su artículo
+``Password Authentication with Insecure Communication'' (1981).
+
+Para suscitar interés, exponemos a continuación algunos ejemplos notables de este tipo de ataque:
+\begin{itemize}
+	\item En 2013, Edward Snowden reveló que la NSA (US National Security Agency) se estaba haciendo pasar por Google para llevar un
+	registro de las búsquedas de cada persona. Este ataque violaba gravemente el derecho a la intimidad de los ciudadanos, y se realizó con
+	la excusa de combatir el terrorismo tras los sucesos del 11 de septiembre de 2001. Su poder para falsificar certificados SSL facilitó
+	enormemente el ataque.
+	
+	\item En 2015, un grupo de cibercriminales sustituyeron los datos bancarios en un e-mail que interceptaron a Paul Lupton, y que iba dirigido
+	a la notaría para cobrar la venta de su piso. La cantidad de 333000 libras fue enviada a la cuenta fraudulenta en lugar de a la familia Lupton.
+	
+	\item También en 2015, el ISP (Internet Service Provider) Comcast fue descubierto insertando anuncios y notificaciones en el contenido
+	que sus clientes transmitían a través de su red.
+	
+	\item Desde al menos finales de 2014, el Adware (software para incluir publicidad) de la empresa Superfish venía instalado en algunos ordenadores
+	Lenovo. La instalación incluía la clave pública de Superfish en el equipo, y la usaba para volver a encriptar el tráfico después de desencriptarlo
+	e introducir anuncios. Además, la clave pública era la misma para todos los equipos, y en cuanto se extrajo la clave privada, cualquiera podía
+	emitir un certificado (para un sitio web o VPN) que todos estos ordenadores reconocerían como fiable. Esta polémica llevó al cierre de la empresa
+	en mayo de 2015.
+	
+	\item En 2017, una brecha de seguridad en las aplicaciones Android de varios bancos permitió el robo de credenciales a una gran cantidad de clientes
+	a través de ataques MITM, sólo había que conectarse a la misma red que la víctima.
+	
+	\item En 2010, un complemento de Firefox para recordar contraseñas utilizaba una cookie para que los usuarios no tuvienen que volver a introducir
+	sus credenciales. Aunque el usuario y la contraseña eran cifrados, la cookie no, por lo que cualquiera que se hiciese con ella podría acceder
+	a la cuenta del usuario de forma ilegítima. Este problema afectó sobre todo a Twitter y Facebook, y suscitó grandes esfuerzos por prevenir este tipo
+	 de ataques en sitios web de esta índole.
+\end{itemize}
+
+\section{Descripción del ataque Man-in-the-Middle}
+
+\section{Cómo evitar ataques MITM}
+
 \section{Simulación de ataque}
 
 A continuación, mostramos una simulación de un ataque Man-in-the-Middle, seguiremos
@@ -354,10 +419,39 @@ Además, \texttt{urlsnarf} registra cada petición HTTP que se haga entre las v�
 	\label{fig:urlsnarf}
 \end{figure}
 
+\section{Conclusiones}
+
 \section{Bibliografía}
 
-% https://www.garron.me/es/gnu-linux/habilitar-ip-forward-linux-ubuntu.html
-% https://www.ettercap-project.org
-% https://www.youtube.com/watch?v=fbXu8EX0hsI
+Ataque MTIM en demostración de Marconi:
+\begin{itemize}
+	\item \href{https://havocshield.com/2020/07/cybersecurity-history-the-very-first-man-in-the-middle-attack}{https://havocshield.com/2020/07/cybersecurity-history-the-very-first-man-in-the-middle-attack}.
+	\item \href{https://www.bbc.com/mundo/noticias/2016/05/160523_primer_hacker_caballero_victoriano_marconi_fleming_maskelyne_finde_dv}{https://www.bbc.com/mundo/noticias/2016/05/\\160523\_primer\_hacker\_caballero\_victoriano\_marconi\_fleming\_maskelyne\_finde\_dv}.
+\end{itemize}
+
+Primeras menciones a este tipo de ataques:
+\begin{itemize}
+	\item \href{https://www.apriorit.com/dev-blog/526-mitm-attacks-ssl-tls}{https://www.apriorit.com/dev-blog/526-mitm-attacks-ssl-tls}.
+\end{itemize}
+
+Ejemplos notables:
+\begin{itemize}
+	\item Escándalo de la NSA: \href{https://www.cnet.com/news/nsa-disguised-itself-as-google-to-spy-say-reports}{https://www.cnet.com/news/nsa-disguised-itself-as-google-to-spy-say-reports}.
+	\item Estafa a la familia Lupton: \href{https://www.conveyancingassociation.org.uk/fraudsters-hacked-emails-to-my-solicitor-and-stole-340000-from-my-property-sale-a-case-study-from-ca-affiliate-members-lawyer-checker}{https://www.conveyancingassociation.org.uk/fraudsters-hacked-emails-to-my-solicitor-and-stole-340000-from-my-property-sale-a-case-study-from-ca-affiliate-members-\\lawyer-checker}.
+	\item Fraude de Comcast: \href{https://www.infoworld.com/article/2925839/code-injection-new-low-isps.html}{https://www.infoworld.com/article/2925839/code-injection-new-low-isps.html}.
+	\item Incidente de Superfish con Lenovo: \href{https://www.techrepublic.com/article/superfish-adware-weakens-security-and-injects-ads-on-some-lenovo-laptops}{https://www.techrepublic.com/article/superfish-adware-weakens-security-and-injects-ads-on-some-lenovo-laptops}.
+	\item Vulnerabilidad en aplicaciones bancarias: \href{https://www.zdnet.com/article/man-in-the-middle-flaw-left-smartphone-banking-apps-vulnerable}{https://www.zdnet.com/article/man-in-the-middle-flaw-left-smartphone-banking-apps-vulnerable}.
+	\item Brecha de seguridad de Firesheep: \href{https://techcrunch.com/2010/10/24/firesheep-in-wolves-clothing-app-lets-you-hack-into-twitter-facebook-accounts-easily}{https://techcrunch.com/2010/10/24/firesheep-in-wolves-clothing-app-lets-you-hack-into-twitter-facebook-accounts-easily}.
+\end{itemize}
+
+TODO
+
+Simulación:
+\begin{itemize}
+	\item Rediredirección de paquetes: \href{https://www.garron.me/es/gnu-linux/habilitar-ip-forward-linux-ubuntu.html}{https://www.garron.me/es/gnu-linux/habilitar-ip-forward-linux-\\ubuntu.html}.
+	\item Tutorial YouTube: \href{https://www.youtube.com/watch?v=fbXu8EX0hsI}{https://www.youtube.com/watch?v=fbXu8EX0hsI}.
+\end{itemize}
+
+TODO
 
 \end{document}
