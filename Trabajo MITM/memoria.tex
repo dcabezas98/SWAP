@@ -27,6 +27,8 @@
 \usepackage{amsfonts}
 \usepackage{amsmath}
 
+\usepackage{ marvosym }
+
 \usepackage[formats]{listings}
 \lstdefineformat{R}{~=\( \sim \)}
 \lstset{basicstyle=\ttfamily,format=R}
@@ -63,7 +65,7 @@
 \maketitle
 \vfill
 \begin{flushleft}
-{\Large Horas dedicadas al desarrollo del trabajo: 11}
+{\Large Horas dedicadas al desarrollo del trabajo: 19}
 \end{flushleft}
 \vspace{40mm}
 ~
@@ -132,9 +134,116 @@ Para suscitar interés, exponemos a continuación algunos ejemplos notables de e
 	 de ataques en sitios web de esta índole.
 \end{itemize}
 
+Como podemos observar, cada ataque aprovecha algúna brecha de seguridad o es perpetrado por una entidad con control sobre la red o sobre la autoridad
+de certificación.
+
 \section{Descripción del ataque Man-in-the-Middle}
 
-\section{Cómo evitar ataques MITM}
+Man-in-the-middle es un tipo de ciberataque en el que un atacante intercepta una comunicación entre dos entidades y se hace pasar por ambas a la vez.
+Como resultado, ambos partícipes tienen la sensación de estar comunicándose directamente, cuando realmente la información puede ser
+consultada y/o alterada por el atacante. 
+
+Por ejemplo, imaginemos que el cliente Bob quiere conectarse a la aplicación del banco (el servidor) para hacer una trasferencia de 500\EUR \ al número de cuenta
+xxx. Por desgracia, Alice (el atacante) logra interceptar la conexión por alguna de las formas que veremos más adelante, y recibe los credenciales de Bob para
+acceder a la página del banco. Bob cree estar conectado a la aplicación del banco, cuando realmente está en una copia creada por Alice, mientras
+que Alice se conecta a la aplicación (real) del banco usando los credenciales de Bob. De este modo, tanto Bob como el banco creen que se están
+comunicando entre sí, pero ambos se están comunicando con Alice.
+
+Cuando Bob rellena el (falso) formulario para realizar la transferencia de 500\EUR \ al número de cuenta xxx, Alice recibe este formulario y
+rellena un formulario (real) en la aplicación del banco con la cuenta de Bob para hacer una transferencia de 5000\EUR \ al número de cuenta yyy,
+el número de Alice. Como de costumbre, el banco envía un mensaje a Alice diciendo: ``Hola Bob, para confirmar su transferencia de 5000\EUR \ al número
+ de cuenta yyy, sume los dígitos 1, 2 y 7 de su código secreto e introduzca el resultado''. Alice envía a Bob a través de la aplicación falsa
+ un mensaje en el que dice:
+ ``Hola Bob, para confirmar su transferencia de 500\EUR \ al número
+ de cuenta xxx, sume los dígitos 1, 2 y 7 de su código secreto e introduzca el resultado''. El pobre Bob envía a Alice la respuesta de seguridad,
+ sin saber que Alice la utilizará para robarle 5000\EUR. 
+ 
+ Desde los puntos de vista de Bob y del banco, la comunicación que acaba de ocurrir corresponde al proceso normal de una transferencia. Sin embargo,
+ Bob y el banco no han estado en contacto en ningún momento, y Alice ha sido la gran beneficiada. 
+ Bob y el banco han sido víctimas de un ataque man-in-the-middle perpetrado por Alice.
+ 
+ \begin{figure}[H]
+ 	\centering
+ 	\includegraphics[width=120mm]{images/memoir/mitm}
+ 	\caption{Esquema de conexión típico de un ataque MITM. En este caso la comunicación es entre cliente y servidor, pero también podría
+ 		ser entre dos usuarios.}
+ \end{figure}
+ 
+ Del mismo modo, este tipo de ataques pueden utilizarse para espiar conversaciones durante un largo tiempo, sin que ninguna de las partes legítimas
+ se percate de ello.
+ 
+ El inconveniente de los ataques man-in-the-middle es que requieren un papel muy activo del atacante, que debe reenviar los mensajes constantemente
+ para las víctimas no sospechen que están siendo atacadas. Este proceso puede ser más o menos automatizable dependiendo de la medida en la que el
+ atacante desee modificar la comunicación: puede simplemente escuchar y reenviar, o puede modificar los mensajes como en el ejemplo que acabamos
+ de ilustrar.
+ 
+ \subsection{Formas de hacer un ataque MITM}
+ 
+ A continuación expondremos diferentes maneras de interceptar una comunicación y suplantar a ambos participantes.
+ 
+ \subsubsection*{ARP Cache Poisoning}
+ 
+ El protocolo ARP es el encargado de relacionar cada dirección IP con la dirección física correspondiente. Para evitar tener que preguntar constantemente por la dirección física asociada una IP, este protocolo guarda en caché las direcciones físicas de las últimas direcciones IP consultadas.
+ 
+ Un atacante puede beneficiarse de las características de este protocolo enviando a los integrantes de la comunicación mensajes en los que indique que la dirección IP del otro integrante corresponde con la dirección física del atacante. Así el atacante se infiltra en la conversación haciéndose pasar por ambas víctimas y recibiendo los mensajes que vayan destinados a cualquiera de las víctimas desde su compañero. 
+ 
+ Para que este ataque tenga éxito, es importante que el atacante siga mandando mensajes a sus víctimas y no corte la comunicación entre ambas, para que ninguna tenga la sospecha de que hay errores en el intercambio de información.
+ 
+ \begin{figure}[H]
+ 	\centering
+ 	\includegraphics[width=120mm]{images/esquema-arp}
+ 	\caption{Esquema de ARP Cache Poisoning. Fotograma extraído de \href{https://www.youtube.com/watch?v=fbXu8EX0hsI}{este tutorial}.}
+ \end{figure}
+
+	Más adelante realizaremos una simulacción donde mostraremos cómo realizar un ataque MITM utilizando ARP Cache Poisoning.
+
+\subsubsection*{DNS Cache Poisoning}
+
+ El protocolo DNS tiene como función relacionar cada dominio con la dirección IP de la máquina que lo sirve. Cada máquina guarda en caché las direcciones IP de los últimos dominios visitados.
+ 
+ El ataque MITM mediante DNS Cache Poisoning consiste en infiltrarse en la comunicación entre un usuario y un servidor DNS para proporcionarle al usuario una entrada DNS falsa que conduce a una página similar a la que éste quiere acceder. De este modo, el usuario piensa que está accediendo a una página cuando realmente navega en una creada por el atacante.
+ 
+ \subsubsection*{HTTPS Spoofing}
+ 
+ En este ataque, el atacante crea una página HTTPS con un dominio con apariencia similar al dominio de una de sus víctimas. Elabora la página de manera que su contenido sea idéntico al de la página original. De esta manera, el usuario que acceda a este dominio no sospechará de que la página no es segura, puesto que usa HTTPS y el dominio parece el mismo. Sin embargo, toda la información introducida en la página falsa podrá ser vista y usada posteriormente por el atacante.
+ 
+ Por ejemplo, si visitamos el enlace \href{https://www.xn--80ak6aa92e.com}{https://www.xn--80ak6aa92e.com} veremos que el dominio que aparece en la
+  barra de navegación se asemeja a \href{https://www.apple.com}{https://www.apple.com}, mientras que el contenido es totalmente distinto y ambas páginas
+   utilizan HTTPS. Esto puede evitarse utilizando un navegador que maneje correctamente los dominios unicode o instalando alguna
+  \href{https://github.com/yabirgb/punycodeAlert}{extensión} que detecte
+ el uso de este tipo de dominios. Otra alternativa sería modificar la `a' de apple (en arabic) por una `a' del cirílico, ambos caracteres se ven
+ igual, pero sus valores unicode son diferentes.
+ 
+ Normalmente, se utiliza el Phishing para hacer que la víctima haga click en uno de estos enlaces engañosos. Es decir, se le envía el link por
+ email o mensaje de texto para intentar que entre. Una vez dentro, es muy complicado para la víctima percatarse de que la página web es ilegítima.
+ 
+ \subsubsection*{Wi-Fi Eavesdropping}
+ 
+ Los atacantes pueden interceptar el tráfico en redes públicas o inseguras, o incluso crear una red WiFi para ver todo el tráfico que circula por ella. Si un usuario escribe sus credenciales, contraseñas, cuentas bancarias o cualquier tipo de información sensible en esa red, el atacante puede robarlas y usarlas en su beneficio.
+ 
+ \subsubsection*{Session Hijacking}
+ 
+ Al iniciar la comunicación en una página web, se crea una cookie con información relativa a la sesión. Si un atacante es capaz de hacerse con dicha cookie, éste será capaz de navegar por dicha web haciéndose pasar por el usuario.
+
+\section{Cifrado y firma para evitar ataques MITM}
+
+Seguidamente, comentamos cómo el sistema de cifrado asimétrico puede ayudarnos a establecer un canal de comunicación libre de este tipo de ataque.
+Todo lo que necesitamos es la seguridad de que el intercambio de claves públicas se haya realizado correctamente, ya sea en persona, por una
+autoridad fiable que asigne las claves o por algún otro método seguro.
+
+Imaginemos que Bob quiere enviar un mensaje a Eve. Primero Bob firmaría el mensaje cifrándolo con su clave privada, y a continuación lo cifraría
+con la clave pública de Eve. Para descifrar el mensaje, Eve tendría que descifrarlo con su clave privada (algo que sólo Eve puede hacer) y posteriormente
+lo descifraría con la clave pública de Bob. La única forma de que Eve obtenga un mensaje legible es que efectivamente sea Bob el que haya firmado el
+ mensaje (con la clave privada de Bob) y lo haya cifrado para ella (con la clave pública de Eve).
+
+Si el mensaje fuese interceptado por Alice, ésta no podría acceder a la información porque no dispone de la clave privada de Eve para descifrarlo,
+y el mensaje simplemente se perdería si Eve no lo reenviase.
+Además, es imposible que Alice pueda hacerse pasar por Bob, ya que si el mensaje no se firma cifrándolo con la clave privada de Bob (de la que Eve
+tampoco dispone), Eve no obtendrá un mensaje legible al descifrarlo con la clave pública de Bob (comprobar la firma). Por tanto Eve sólo puede
+reenviar el mensaje íntegro que recibío, sin siquiera poder leerlo.
+
+Por supuesto, existen ocasiones en los que garantizar la seguridad del intercambio de claves es imposible. No conseguimos nada con este método si el
+propio intercambio es interceptado por un atacante.
 
 \section{Simulación de ataque}
 
@@ -279,13 +388,6 @@ GROUP 1 : 192.168.57.3 08:00:27:01:3A:C8
 GROUP 2 : 192.168.57.4 08:00:27:6D:B7:F2
 \end{Verbatim}
 
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=90mm]{images/ettercap-arp-poisoning}
-	\caption{Ventana emergente con las opciones de \textit{ARP poisoning}.}
-	\label{fig:host-list}
-\end{figure}
-
 Abrimos Wireshark y capturamos los paquetes de la interfaz \texttt{vboxnet1}. Podemos observar que se envían varios paquetes desde 0a:00:27:00:00:01, el atacante, a ambas víctimas. Por ejemplo, si nos fijamos en el primer paquete capturado podemos comprobar que es un paquete del atacante al cliente. Este paquete informa al cliente de que la dirección IP 192.168.57.4 se encuentra en la dirección MAC del atacante, cuando realmente esa dirección IP pertenece al servidor. Análogamente en el segundo paquete observamos como el atacante informa al servidor de que la dirección IP del cliente, 192.168.57.3, se encuentra en la dirección física del atacante.
 
 Por tanto, el atacante ha conseguido que ambas víctimas le identifiquen como la contraria, por lo que todo el tráfico que circule entre ambas máquinas pasará por este y será capaz de husmearlo. Ha envenenado la caché de ARP.
@@ -421,9 +523,43 @@ Además, \texttt{urlsnarf} registra cada petición HTTP que se haga entre las v�
 
 \section{Conclusiones}
 
+Con este trabajo, esperamos haber concienciado al lector de la facilidad con la que se puede ser víctima de este tipo de ataques, así como
+de la gravedad que pueden llegar a tener.
+
+Notemos que es muy sencillo realizar un ataque man-in-the-middle cuando existe alguna brecha de seguridad. También cuando se tiene cierto poder
+o control sobre la red o la autoridad de certificación.
+
+Para finalizar, proporcionaremos algunas recomendaciones y buenas prácticas para evitar ser víctima de este tipo de ataques.
+\begin{itemize}
+	\item Evitar el uso de redes Wi-Fi públicas y sin contraseña.
+	\item Evitar hacer logins en páginas (como una red social, tienda online o aplicación bancaria) desde redes públicas como las de cafeterías
+	o bibliotecas.
+	\item Evitar navegar en sitios web que no utilicen protocolo HTTPS, deberíamos tener un navegador que nos avise antes de entrar a una página que
+	no lo utiliza.
+	\item Usar varios factores de autenticación, lo que dificultará que nos perjudiquen con el robo de credenciales.
+	\item Utilizar algún protocolo de cifrado y firma para intercambiar mensajes importantes.
+	\item Cerrar la sesión en páginas antes de cerrarlas.
+	\item Seguir el principio de \href{https://www.csoonline.com/article/3247848/what-is-zero-trust-a-model-for-more-effective-security.html}{confianza cero}: No aceptar conexiones hasta verificar su procedencia.
+\end{itemize}
+
+Los siguientes comportamientos podrían indicar que estamos sufriendo un ataque MITM.
+\begin{itemize}
+	\item Experimentamos retrasos en la comunicación, o desconexiones inesperadas.
+	\item Aparecen direcciones extrañas en nuestra barra de navegación.
+	\item Tenemos conexiones a sitios desconocidos.
+\end{itemize}
+
+Si se diese el caso, podríamos confirmarlo y/o solucionarlo con las siguientes acciones.
+\begin{itemize}
+	\item Monitorizar la actividad de red con Wireshark o similares.
+	\item Inspeccionar las conexiones actuales.
+	\item Usar un network sniffer (una herramienta para espiar tráfico) de forma defensiva.
+	\item Buscar software malicioso en nuestro equipo.
+\end{itemize}
+
 \section{Bibliografía}
 
-Ataque MTIM en demostración de Marconi:
+Ataque MTIM en demostración de Marconi.
 \begin{itemize}
 	\item \href{https://havocshield.com/2020/07/cybersecurity-history-the-very-first-man-in-the-middle-attack}{https://havocshield.com/2020/07/cybersecurity-history-the-very-first-man-in-the-middle-attack}.
 	\item \href{https://www.bbc.com/mundo/noticias/2016/05/160523_primer_hacker_caballero_victoriano_marconi_fleming_maskelyne_finde_dv}{https://www.bbc.com/mundo/noticias/2016/05/\\160523\_primer\_hacker\_caballero\_victoriano\_marconi\_fleming\_maskelyne\_finde\_dv}.
@@ -434,7 +570,7 @@ Primeras menciones a este tipo de ataques:
 	\item \href{https://www.apriorit.com/dev-blog/526-mitm-attacks-ssl-tls}{https://www.apriorit.com/dev-blog/526-mitm-attacks-ssl-tls}.
 \end{itemize}
 
-Ejemplos notables:
+Ejemplos notables.
 \begin{itemize}
 	\item Escándalo de la NSA: \href{https://www.cnet.com/news/nsa-disguised-itself-as-google-to-spy-say-reports}{https://www.cnet.com/news/nsa-disguised-itself-as-google-to-spy-say-reports}.
 	\item Estafa a la familia Lupton: \href{https://www.conveyancingassociation.org.uk/fraudsters-hacked-emails-to-my-solicitor-and-stole-340000-from-my-property-sale-a-case-study-from-ca-affiliate-members-lawyer-checker}{https://www.conveyancingassociation.org.uk/fraudsters-hacked-emails-to-my-solicitor-and-stole-340000-from-my-property-sale-a-case-study-from-ca-affiliate-members-\\lawyer-checker}.
@@ -444,14 +580,28 @@ Ejemplos notables:
 	\item Brecha de seguridad de Firesheep: \href{https://techcrunch.com/2010/10/24/firesheep-in-wolves-clothing-app-lets-you-hack-into-twitter-facebook-accounts-easily}{https://techcrunch.com/2010/10/24/firesheep-in-wolves-clothing-app-lets-you-hack-into-twitter-facebook-accounts-easily}.
 \end{itemize}
 
-TODO
+Ataque MITM: Explicación y tipos.
+\begin{itemize}
+	\item What is a MITM Attack, Detection and Prevention Tips: \href{https://www.varonis.com/blog/man-in-the-middle-attack}{https://www.varonis.com/blog/man-in-the-middle-attack}.
+	\item A Review of Man-in-the-Middle Attacks: \href{https://arxiv.org/pdf/1504.02115.pdf}{https://arxiv.org/pdf/1504.02115.pdf}.
+	\item Punycode alert: \href{https://github.com/yabirgb/punycodeAlert}{https://github.com/yabirgb/punycodeAlert}.
+\end{itemize}
 
-Simulación:
+Cifrado y firma para evitar ataques MITM.
+\begin{itemize}
+	\item Asignatura Seguridad y Protección de Sistemas Informáticos. Apuntes del profesor Francisco Miguel García Olmedo.
+\end{itemize}
+
+Simulación.
 \begin{itemize}
 	\item Rediredirección de paquetes: \href{https://www.garron.me/es/gnu-linux/habilitar-ip-forward-linux-ubuntu.html}{https://www.garron.me/es/gnu-linux/habilitar-ip-forward-linux-\\ubuntu.html}.
 	\item Tutorial YouTube: \href{https://www.youtube.com/watch?v=fbXu8EX0hsI}{https://www.youtube.com/watch?v=fbXu8EX0hsI}.
 \end{itemize}
 
-TODO
+Consejos para evitar ser víctimas del ataque.
+\begin{itemize}
+	\item What is a MITM Attack, Detection and Prevention Tips: \href{https://www.varonis.com/blog/man-in-the-middle-attack}{https://www.varonis.com/blog/man-in-the-middle-attack}.
+	\item Zero Trust: \href{https://www.csoonline.com/article/3247848/what-is-zero-trust-a-model-for-more-effective-security.html}{https://www.csoonline.com/article/3247848/what-is-zero-trust-a-model-for-more-effective-security.html}.
+\end{itemize}
 
 \end{document}
