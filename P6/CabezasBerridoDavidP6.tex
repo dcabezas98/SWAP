@@ -122,6 +122,7 @@ Si ahora modificamos la carpeta compartida en alguna máquina (M1, M2 o servidor
 	\subfigure{\includegraphics[width=100mm]{imgs/m2-ls}}
 	\subfigure{\includegraphics[width=100mm]{imgs/nfs-ls}}
 	\caption{El archivo creado por M1 aparece en M2 y en el servidor NFS.}
+	\label{fig:test}
 \end{figure}
 
 \subsection{Hacer la configuración permanente}
@@ -135,6 +136,105 @@ Al reiniciar la máquina, comprobamos que el directorio está montado y podemos 
 
 \section{Seguridad en el servidor NFS}
 
+Nuestro objetivo es configurar IPTABLES para que el servidor NFS siga funcionando mientras denegamos implícitamente el tráfico entrante.
+Partimos por tanto de la siguiente configuración:
+\begin{Verbatim}
+iptables -P INPUT DROP
+iptables -P OUTPUT ACCEPT
+iptables -P FORWARD DROP
+iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+\end{Verbatim}
 
+Para los servicios \textbf{nfs} y \textbf{portmapper}, sólo tenemos que abrir los puertos 2049 y 111 respectivamente, tanto TCP como UDP.
+Sin embargo, los servicios \textbf{mountd} y \textbf{nlockmgr} utilizan puertos dinámicos. Podemos consultar qué puerto está utilizando cada servicio
+con la siguiente orden.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=80mm]{imgs/rpcinfo1}
+\end{figure}
+
+Como no podemos abrir puertos dinámicamente con IPTABLES, fijaremos puertos para estos servicios. Para \textbf{mountd}, modificamos el archivo
+\texttt{/etc/default/nfs-kernel-server} y añadimos la siguiente línea.
+\begin{Verbatim}
+RPCMOUNTDOPTS="--manage-gids -p 2000"
+\end{Verbatim}
+Para \textbf{nlockmgr}, creamos el archivo \texttt{/etc/sysctl.d/swap-nfs-ports.conf} con las siguientes opciones
+\begin{Verbatim}
+fs.nfs.nlm_tcpport = 2001
+fs.nfs.nlm_udpport = 2002
+\end{Verbatim}
+
+Lanzamos el archivo de configuración y reniciamos el servidor NFS con las siguientes órdenes.
+\begin{Verbatim}
+sudo sysctl --system
+/etc/init.d/nfs-kernel-server restart
+\end{Verbatim}
+La primera de ellas devuelve una salida muy extensa de configuraciones que se aplican. Entre ellas, está la siguiente secuencia.
+\begin{Verbatim}
+* Applying /etc/sysctl.d/swap-nfs-ports.conf ...
+fs.nfs.nlm_tcpport = 2001
+fs.nfs.nlm_udpport = 2002
+\end{Verbatim}
+La segunda orden produce la siguiente salida.
+\begin{Verbatim}
+[ ok ] Restarting nfs-kernel-server (via systemctl): nfs-kernel-server.service.
+\end{Verbatim}
+
+Como parece que todo va correctamente, volvemos a comprobar los puertos que utiliza cada servicio.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=80mm]{imgs/rpcinfo2}
+\end{figure}
+
+Como podemos observar, son justo los puertos que hemos seleccionado. Ahora podemos abrirlos con IPTABLES (sólo para M1 y M2) como solemos hacer.
+Nuestro script de IPTABLES queda de esta forma.
+
+\begin{Verbatim}
+#!/bin/sh
+
+# 1: Eliminar todas las reglas, configuración limpia
+iptables -F
+iptables -X
+iptables -Z
+
+# 2: Denegación implícita del tráfico entrante
+iptables -P INPUT DROP
+iptables -P OUTPUT ACCEPT
+iptables -P FORWARD DROP
+
+# 3: Permitir conexiones
+iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+# 4: Permitir acceso desde localhost (interface lo):
+iptables -A INPUT -i lo -j ACCEPT
+iptables -A OUTPUT -o lo -j ACCEPT
+
+# 5: Abrir puerto 2049 (nfs), TCP y UDP, sólo M1 y M2
+iptables -A INPUT -p tcp -s 192.168.56.102 --dport 2049 -j ACCEPT
+iptables -A INPUT -p udp -s 192.168.56.102 --dport 2049 -j ACCEPT
+iptables -A INPUT -p tcp -s 192.168.56.101 --dport 2049 -j ACCEPT
+iptables -A INPUT -p udp -s 192.168.56.101 --dport 2049 -j ACCEPT
+
+# 6: Abrir puerto 111 (portmapper), TCP y UDP, sólo M1 y M2
+iptables -A INPUT -p tcp -s 192.168.56.102 --dport 111 -j ACCEPT
+iptables -A INPUT -p udp -s 192.168.56.102 --dport 111 -j ACCEPT
+iptables -A INPUT -p tcp -s 192.168.56.101 --dport 111 -j ACCEPT
+iptables -A INPUT -p udp -s 192.168.56.101 --dport 111 -j ACCEPT
+
+# 7: Abrir puerto 2000 (mountd), TCP y UDP, sólo M1 y M2
+iptables -A INPUT -p tcp -s 192.168.56.102 --dport 2000 -j ACCEPT
+iptables -A INPUT -p udp -s 192.168.56.102 --dport 2000 -j ACCEPT
+iptables -A INPUT -p tcp -s 192.168.56.101 --dport 2000 -j ACCEPT
+iptables -A INPUT -p udp -s 192.168.56.101 --dport 2000 -j ACCEPT
+
+# 8: Abrir puertos para nlockmgr: 2001 (TCP) y 2002 (UDP), sólo M1 y M2
+iptables -A INPUT -p tcp -s 192.168.56.102 --dport 2001 -j ACCEPT
+iptables -A INPUT -p udp -s 192.168.56.102 --dport 2002 -j ACCEPT
+\end{Verbatim}
+
+Activamos esta configuración. Para comprobar que sigue funcionando, realizamos satisfactoriamente una modificación similar a la de la Figura \ref{fig:test},
+modificando también desde M1.
 
 \end{document}
