@@ -66,6 +66,8 @@ Creamos una nueva máquina virtual llamada \textbf{NFS-dxabezas}. Al igual que l
 (NAT + Solo-Anfitrión), instalamos Ubuntu Server 18.04.1 y creamos un usuario \emph{dxabezas} con contraseña \emph{Swap1234}.
 Comprobamos mediante PING que la máquina NFS tiene conexión con el resto de máquinas en la granja.
 
+Su IP (en la red local) es \texttt{192.168.56.108}.
+
 \section{Configurar servidor NFS}
 
 Comenzamos creando la carpeta a compartir, y cambiamos el propietario y los permisos.
@@ -99,6 +101,40 @@ Finalmente, reiniciamos el servicio y comprobamos el estado.
 
 \section{Configurar los clientes M1 y M2}
 
+La siguiente configuración se realiza tanto en M1 como en M2.
+
+Primero instalamos los paquetes necesarios.
+\begin{Verbatim}
+sudo apt install nfs-common rpcbind
+\end{Verbatim}
+
+A continuación, creamos el punto de montaje, el directorio \texttt{datos}. También le damos todos los permisos sobre él a todos los usuarios.
+\begin{Verbatim}
+cd /home/dxabezas
+mkdir datos
+chmod -R 777 datos
+\end{Verbatim}
+
+Si ahora modificamos la carpeta compartida en alguna máquina (M1, M2 o servidoro NFS), los cambios también se hacen efectivos en las otras dos.
+\begin{figure}[H]
+	\centering
+	\subfigure{\includegraphics[width=90mm]{imgs/m1-touch}}
+	\subfigure{\includegraphics[width=100mm]{imgs/m2-ls}}
+	\subfigure{\includegraphics[width=100mm]{imgs/nfs-ls}}
+	\caption{El archivo creado por M1 aparece en M2 y en el servidor NFS.}
+\end{figure}
+
+\subsection{Hacer la configuración permanente}
+
+Para hacer la configuración permanente, sólo tenemos que añadir (tanto en M1 como en M2) la siguiente línea al fichero \texttt{/etc/fstab}.
+\begin{Verbatim}[tabsize=4]
+192.168.56.108:/datos/compartido /home/dxabezas/datos/ nfs
+	auto,noatime,nolock,bg,nfsvers=3,intr,tcp,actimeo=1800 0 0
+\end{Verbatim}
+Al reiniciar la máquina, comprobamos que el directorio está montado y podemos acceder a los archivos.
+
 \section{Seguridad en el servidor NFS}
+
+
 
 \end{document}
