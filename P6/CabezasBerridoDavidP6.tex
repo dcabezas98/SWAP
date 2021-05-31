@@ -232,6 +232,8 @@ iptables -A INPUT -p udp -s 192.168.56.101 --dport 2000 -j ACCEPT
 # 8: Abrir puertos para nlockmgr: 2001 (TCP) y 2002 (UDP), sólo M1 y M2
 iptables -A INPUT -p tcp -s 192.168.56.102 --dport 2001 -j ACCEPT
 iptables -A INPUT -p udp -s 192.168.56.102 --dport 2002 -j ACCEPT
+iptables -A INPUT -p tcp -s 192.168.56.101 --dport 2001 -j ACCEPT
+iptables -A INPUT -p udp -s 192.168.56.101 --dport 2002 -j ACCEPT
 \end{Verbatim}
 
 Activamos esta configuración. Para comprobar que sigue funcionando, realizamos satisfactoriamente una modificación similar a la de la Figura \ref{fig:test},
