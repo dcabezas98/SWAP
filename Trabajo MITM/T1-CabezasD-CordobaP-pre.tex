@@ -1,0 +1,247 @@
+\documentclass[serif,9pt]{beamer}
+\usetheme{tree}
+
+\usepackage[latin1]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{caption}
+\usepackage{graphicx} % figuras
+\usepackage{subfigure} % subfiguras
+\usepackage{float}
+
+\usepackage{ marvosym }
+\usepackage{parskip}
+
+\hypersetup{bookmarks=true,
+bookmarksnumbered=false, % true means bookmarks in 
+% left window are numbered
+bookmarksopen=false,     % true means only level 1
+% are displayed.
+colorlinks=true,
+allcolors=blue,
+urlcolor=blue}
+
+\restylefloat{figure}
+
+\beamersetuncovermixins{\opaqueness<1>{25}}{\opaqueness<2->{15}}
+
+\AtBeginSection[]
+{
+  \begin{frame}<beamer>{Contenido}
+    \tableofcontents[currentsection]
+  \end{frame}
+}
+
+\AtBeginSubsection[]
+{
+  \begin{frame}<beamer>{Contenido}
+    \tableofcontents[currentsection,currentsubsection]
+  \end{frame}
+}
+
+\begin{document}
+
+\title{Ataques Man-in-the-Middle}  
+\author{ Grupo 1: \vspace{3mm} \\
+	 David Cabezas Berrido \vspace{1mm} \\ 
+	 dxabezas@correo.ugr.es \vspace{3mm} \\
+	 Patricia Córdoba Hidalgo \vspace{1mm} \\ 
+	 patriciacorhid@correo.ugr.es \vspace{3mm}}
+\date{}
+
+\begin{frame}
+\titlepage
+\end{frame}
+
+\begin{frame}{Contenido}
+\tableofcontents
+\end{frame} 
+
+\section{Motivación}
+\begin{frame}{Motivación}
+Vamos a presentar uno de los ciberataques más comunes en la historia y en la actualidad. Al igual que con otros tipos de ciberataques, conviene estar informado
+sobre las distintas formas en las que se manifiesta y saber cómo protegerse de él.
+\end{frame}
+
+\begin{frame}
+	\begin{columns}[T] % align columns
+		\begin{column}{.45\textwidth}
+			\begin{figure}[H]
+				\centering
+				\includegraphics[width=50mm]{images/memoir/marconi-paper}
+				\caption{Recorte de periódico: Austin-American Statesman, 17 de julio de 1903.}
+			\end{figure}
+		\end{column}%
+		\hfill%
+		\begin{column}{.55\textwidth}
+			\vspace{7mm}
+			\begin{figure}[H]
+				\centering
+				\includegraphics[width=60mm]{images/presentacion/nsa}
+				\caption{Caso Snowden. Se descubrió que la NSA se hacía pasar por Google para robar información.}
+			\end{figure}
+			\begin{figure}[H]
+				\centering
+				\includegraphics[width=60mm]{images/presentacion/lupton}
+				\caption{Robo del pago de una vivienda.}
+			\end{figure}
+		\end{column}%
+	\end{columns}
+\end{frame}
+
+\section{Descripción y variantes}
+\begin{frame}{Descripción}
+	Los ataques (MITM) son una clase de ciberataques en los que un individuo (el atacante) logra infiltrarse en una
+	comunicación entre dos partes legítimas, de forma que ambas partes ignoran su presencia.
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=80mm]{images/memoir/mitm}
+	\end{figure}
+\end{frame}
+
+\begin{frame}{Ejemplo}
+	\begin{enumerate}\setlength\itemsep{4mm}
+		\item Bob (cliente) quiere conectarse a la web del banco (servidor) para hacer una transferencia de 500\EUR \ a la cuenta XXX.
+		\item Alice (atacante) intercepta la conexión y conduce a Bob a una réplica de la web del banco creada por ella.
+		\item Bob intriduce sus credenciales, que son recibidos por Alice.
+		\item Alice se conecta a la aplicación del web con los credenciales de Bob.
+		\item Bob rellena el formulario (falso) para realizar la transferencia.
+	\end{enumerate} 
+\end{frame}
+
+\begin{frame}{Ejemplo}
+	\begin{enumerate}\setlength\itemsep{4mm}
+		\setcounter{enumi}{5}
+		\item Alice recibe el formulario y rellena uno (real) para enviar 5000\EUR \  a la cuenta YYY, registrada como Bob en la aplicación.
+		\item Cuando Alice recibe el siguiente mensaje del banco: ``Hola Bob, para confirmar su transferencia de
+		5000\EUR \ al número de cuenta YYY, sume los dígitos 1, 2 y 7 de su código secreto e introduzca el resultado''.
+		\item Alice envía a Bob a través de la aplicación falsa el mensaje: ``Hola Bob, para confirmar su transferencia de
+		500\EUR \ al número de cuenta XXX, sume los dígitos 1, 2 y 7 de su código secreto e introduzca el resultado''.
+		\item Bob envía a Alice la respuesta de seguridad, que Alice utilizará para robarle 5000\EUR.
+	\end{enumerate} 
+\end{frame}
+
+\begin{frame}{Inconveniente}
+	Este ataque requiere de un papel muy activo del atacante para que las víctimas no se percaten del engaño.
+	
+	\vspace{5mm}
+	
+	Si sólo queremos acceder a la información, se puede reenviar a las víctimas de forma automática. Si queremos alterarla, el proceso es menos automatizable.
+\end{frame}
+
+\begin{frame}{Inconveniente}
+	Este ataque requiere de un papel muy activo del atacante para que las víctimas no se percaten del engaño.
+	
+	\vspace{5mm}
+	
+	Si sólo queremos acceder a la información, se puede reenviar a las víctimas de forma automática. Si queremos alterarla, el proceso es menos automatizable.
+\end{frame}
+
+\subsection{Variantes del ataque}
+
+\begin{frame}{ARP Cache Poisoning}
+ Un atacante envía a los integrantes de la comunicación mensajes en los que indique que la dirección IP del otro integrante corresponde con la  dirección física del atacante.
+ 
+ \vspace{3mm}
+ 
+ El atacante se infiltra en la conversación haciéndose pasar por ambas
+ víctimas y recibiendo los mensajes que vayan destinados a cualquiera de las víctimas desde la otra.
+\end{frame}
+
+\begin{frame}
+ \begin{figure}[H]
+	\centering
+	\includegraphics[width=110mm]{images/esquema-arp}
+	\caption{Esquema de ARP Cache Poisoning. Fotograma extraído del tutorial \href{https://www.youtube.com/watch?v=fbXu8EX0hsI}{https://www.youtube.com/watch?v=fbXu8EX0hsI}.}
+\end{figure}
+\end{frame}
+
+\begin{frame}{DNS Cache Poisoning}
+	Un atacante se infiltra en la comunicación entre un usuario y un servidor DNS, para proporcionarle al usuario una entrada DNS falsa que conduce a una página  creada por el atacante.
+	
+	 \begin{figure}[H]
+		\centering
+		\includegraphics[width=100mm]{images/presentacion/dns-poisoning}
+		\caption{Esquema de DNS Cache Poisoning. Artículo \href{https://arxiv.org/pdf/1504.02115.pdf}{``A Review of Man-in-the-\\Middle Attacks''}, Figura 5.}
+	\end{figure}
+\end{frame}
+
+\begin{frame}{HTTPS Spoofing}
+	El atacante elabora un página HTTPS con dominio similar y contenido idéntico al de otra página a la que quiere acceder
+	una de sus víctimas. 
+	
+	 \vspace{3mm}
+	
+	Por ejemplo, si visitamos el enlace \href{https://www.xn--80ak6aa92e.com}{https://www.xn--80ak6aa92e.com} veremos que el dominio que aparece en la barra de navegación se asemeja a \href{https://www.apple.com}{https://www.apple.com}, mientras que el contenido es totalmente distinto y ambas páginas utilizan HTTPS.
+	
+	 \vspace{3mm}
+	
+	Normalmente se utiliza el Phishing para hacer que la víctima haga click en uno de estos enlaces engañosos.
+\end{frame}
+
+\begin{frame}{Wi-Fi Eavesdropping}
+Los atacantes pueden interceptar el tráfico en redes públicas o inseguras, o incluso crear una red WiFi para ver todo el tráfico que circula por ella. Si un usuario escribe sus credenciales, contraseñas, cuentas bancarias o cualquier tipo de información sensible en esa red, el atacante puede robarlas y usarlas en su beneficio.
+\end{frame}
+
+\begin{frame}{Session Hijacking}
+	El atacante puede hacerse con la cookie que contiene información relativa a la sesión que se crea al iniciar la comunicación con un servidor web. Así, éste será capaz de navegar por dicha web haciéndose pasar por el usuario.
+\end{frame}
+
+
+\section{Cifrado y firma para evitar ataques MITM}
+
+\begin{frame}{Cifrado con clave asimétrica}
+	Bajo el supuesto de que el intercambio de claves públicas pueda producirse en un canal seguro (lo que no siempre ocurre), el sistema de cifrado asímetrico permite establecer un canal de comunicación libre de este tipo de ataques.
+	
+	\vspace{3mm}
+	
+	Estas claves son utilizadas tanto para descifrar los mensajes como para identificar al emisor, por lo que ningún atacante podría acceder a la información cifrada ni suplantar a sus víctimas sin conocer sus claves privadas.	
+\end{frame}
+
+\section{Simulación de ataque}
+
+\begin{frame}{Simulación de ataque}
+	Vídeo simulando un ataque MITM con ARP Cache Poisoning.
+	
+	Seguimos el tutorial de: \href{https://www.youtube.com/watch?v=fbXu8EX0hsI}{https://www.youtube.com/watch?v=fbXu8EX0hsI}.
+\end{frame}
+
+\section{Conclusiones}
+
+\begin{frame}{Consejos y buenas prácticas}
+	\begin{itemize}\setlength\itemsep{4mm}
+		\item Evitar el uso de redes Wi-Fi públicas y sin contraseña.
+		\item Evitar hacer logins desde redes públicas como las de cafeterías
+		o bibliotecas.
+		\item Evitar navegar en sitios web que no utilicen protocolo HTTPS.
+		\item Usar varios factores de autenticación.
+	\end{itemize} 
+\end{frame}
+
+\begin{frame}{Consejos y buenas prácticas}
+	\begin{itemize}\setlength\itemsep{4mm}
+		\item Utilizar algún protocolo de cifrado y firma para intercambiar mensajes importantes.
+		\item Cerrar la sesión en páginas antes de cerrarlas.
+		\item Seguir el principio de \href{https://www.csoonline.com/article/3247848/what-is-zero-trust-a-model-for-more-effective-security.html}{confianza cero}: No aceptar conexiones hasta verificar su procedencia.
+	\end{itemize} 
+\end{frame}
+
+\begin{frame}{Indicios de que estamos siendo víctimas de un ataque MITM}
+	\begin{itemize}\setlength\itemsep{4mm}
+		\item Experimentamos retrasos en la comunicación, o desconexiones inesperadas.
+		\item Aparecen direcciones extrañas en nuestra barra de navegación.
+		\item Tenemos conexiones a sitios desconocidos.
+	\end{itemize} 
+\end{frame}
+
+\begin{frame}{Cómo actuar caso de sospecha}
+	\begin{itemize}\setlength\itemsep{4mm}
+		\item Monitorizar la actividad de red con Wireshark o similares.
+		\item Inspeccionar las conexiones actuales.
+		\item Usar un network sniffer (una herramienta para espiar tráfico) de forma defensiva.
+		\item Buscar software malicioso en nuestro equipo.
+	\end{itemize} 
+\end{frame}
+
+\section{Bibliografía}
+
+\end{document}

@@ -77,7 +77,8 @@
 
 Los ataques man-in-the-middel (MITM) son una clase de ciberataques en los que un individuo (el atacante) logra infiltrarse en una
 comunicación entre dos partes legítimas, de forma que ambas partes ignoran su presencia. Esto permite al atacante acceder a información
-de manera ilegítima, e incluso suplantar la identidad de alguno (o ambos) de los interlocutores y manipular el contenido de los mensajes.
+de manera ilegítima, e incluso suplantar la identidad de alguno (o ambos) de los interlocutores y manipular el contenido de los mensajes. Es uno de los tipos de ciberataques más comunes, por lo que conviene estar informado sobre las distintas formas
+en las que se manifiesta y saber cómo protegerse de él.
 
 En esta memoria expondremos las características de este ataque, lo situaremos en su contexto histórico dentro del mundo de los ciberataques y la
  ciberseguridad, y facilitaremos algunos de los ejemplos reales de este ataque más notables a lo largo de la historia.
@@ -97,7 +98,7 @@ tecnología Nevil Maskelyne logró interceptar uno de los mensajes y sustituirlo
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=90mm]{images/memoir/marconi-paper}
+	\includegraphics[width=80mm]{images/memoir/marconi-paper}
 	\caption{Recorte de periódico: Austin-American Statesman, 17 de julio de 1903.}
 \end{figure}
 
@@ -185,7 +186,7 @@ el número de Alice. Como de costumbre, el banco envía un mensaje a Alice dicie
  
  El protocolo ARP es el encargado de relacionar cada dirección IP con la dirección física correspondiente. Para evitar tener que preguntar constantemente por la dirección física asociada una IP, este protocolo guarda en caché las direcciones físicas de las últimas direcciones IP consultadas.
  
- Un atacante puede beneficiarse de las características de este protocolo enviando a los integrantes de la comunicación mensajes en los que indique que la dirección IP del otro integrante corresponde con la dirección física del atacante. Así el atacante se infiltra en la conversación haciéndose pasar por ambas víctimas y recibiendo los mensajes que vayan destinados a cualquiera de las víctimas desde su compañero. 
+ Un atacante puede beneficiarse de las características de este protocolo enviando a los integrantes de la comunicación mensajes en los que indique que la dirección IP del otro integrante corresponde con la dirección física del atacante. Así el atacante se infiltra en la conversación haciéndose pasar por ambas víctimas y recibiendo los mensajes que vayan destinados a cualquiera de las víctimas desde la otra. 
  
  Para que este ataque tenga éxito, es importante que el atacante siga mandando mensajes a sus víctimas y no corte la comunicación entre ambas, para que ninguna tenga la sospecha de que hay errores en el intercambio de información.
  
@@ -214,8 +215,7 @@ el número de Alice. Como de costumbre, el banco envía un mensaje a Alice dicie
  el uso de este tipo de dominios. Otra alternativa sería modificar la `a' de apple (en arabic) por una `a' del cirílico, ambos caracteres se ven
  igual, pero sus valores unicode son diferentes.
  
- Normalmente, se utiliza el Phishing para hacer que la víctima haga click en uno de estos enlaces engañosos. Es decir, se le envía el link por
- email o mensaje de texto para intentar que entre. Una vez dentro, es muy complicado para la víctima percatarse de que la página web es ilegítima.
+ Normalmente se utiliza el Phishing para hacer que la víctima haga click en uno de estos enlaces engañosos. Es decir, se le envía el link por email o mensaje de texto para intentar que entre. Una vez dentro, es muy complicado para la víctima percatarse de que la página web es ilegítima.
  
  \subsubsection*{Wi-Fi Eavesdropping}
  
