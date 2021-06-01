@@ -94,51 +94,54 @@ Finalmente, proporcionaremos una serie de consejos y buenas prácticas para evit
 El primer ataque MITM de la historia data del año 1903, y ocurrió durante una demostración del telégrafo inalámbrico de Marconi.
 El Profesor Fleming, un asesor de Marconi, presentaba en el Royal Institute la recepción de un mensaje transmitido por Marconi desde la estación de
  Poldhu (a más de 400 kilómetros de distancia). Como la hora y el lugar de la demostración eran más que conocidos, el mago y fanático de la
-tecnología Nevil Maskelyne logró interceptar uno de los mensajes y sustituirlo por un mensaje satírico.
+tecnología Nevil Maskelyne logró interceptar uno de los mensajes y sustituirlo por un mensaje satírico. [\ref{bib-item-1}, \ref{bib-item-2}]
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=80mm]{images/memoir/marconi-paper}
+	\includegraphics[width=75mm]{images/memoir/marconi-paper}
 	\caption{Recorte de periódico: Austin-American Statesman, 17 de julio de 1903.}
 \end{figure}
 
 Con la extensión del uso de los ordenadores, este tipo de ataques cobró mucha popularidad a partir de la década de los 70. Una de las
 primeras menciones a este tipo de ataques se encuentra en ``Software: A Qualitative Assessment, or The Man in the Middle Speaks Back'' (1973), por
 Gerald H. Larsen. Leslie Lamport, desarrollador inicial de \LaTeX, escribió sobre cómo protegerse de este tipo de ataques en su artículo
-``Password Authentication with Insecure Communication'' (1981).
+``Password Authentication with Insecure Communication'' (1981). [\ref{bib-item-3}]
 
 Para suscitar interés, exponemos a continuación algunos ejemplos notables de este tipo de ataque:
 \begin{itemize}
 	\item En 2013, Edward Snowden reveló que la NSA (US National Security Agency) se estaba haciendo pasar por Google para llevar un
 	registro de las búsquedas de cada persona. Este ataque violaba gravemente el derecho a la intimidad de los ciudadanos, y se realizó con
 	la excusa de combatir el terrorismo tras los sucesos del 11 de septiembre de 2001. Su poder para falsificar certificados SSL facilitó
-	enormemente el ataque.
+	enormemente el ataque. [\ref{bib-item-4}]
 	
 	\item En 2015, un grupo de cibercriminales sustituyeron los datos bancarios en un e-mail que interceptaron a Paul Lupton, y que iba dirigido
-	a la notaría para cobrar la venta de su piso. La cantidad de 333000 libras fue enviada a la cuenta fraudulenta en lugar de a la familia Lupton.
+	a la notaría para cobrar la venta de su piso. La cantidad de 333000 libras fue enviada a la cuenta fraudulenta en lugar de a la familia Lupton. [\ref{bib-item-5}]
 	
 	\item También en 2015, el ISP (Internet Service Provider) Comcast fue descubierto insertando anuncios y notificaciones en el contenido
-	que sus clientes transmitían a través de su red.
+	que sus clientes transmitían a través de su red. [\ref{bib-item-6}]
 	
 	\item Desde al menos finales de 2014, el Adware (software para incluir publicidad) de la empresa Superfish venía instalado en algunos ordenadores
 	Lenovo. La instalación incluía la clave pública de Superfish en el equipo, y la usaba para volver a encriptar el tráfico después de desencriptarlo
 	e introducir anuncios. Además, la clave pública era la misma para todos los equipos, y en cuanto se extrajo la clave privada, cualquiera podía
 	emitir un certificado (para un sitio web o VPN) que todos estos ordenadores reconocerían como fiable. Esta polémica llevó al cierre de la empresa
-	en mayo de 2015.
+	en mayo de 2015. [\ref{bib-item-7}]
 	
 	\item En 2017, una brecha de seguridad en las aplicaciones Android de varios bancos permitió el robo de credenciales a una gran cantidad de clientes
-	a través de ataques MITM, sólo había que conectarse a la misma red que la víctima.
+	a través de ataques MITM, sólo había que conectarse a la misma red que la víctima. [\ref{bib-item-8}]
 	
 	\item En 2010, un complemento de Firefox para recordar contraseñas utilizaba una cookie para que los usuarios no tuviesen que volver a introducir
 	sus credenciales. Aunque el usuario y la contraseña eran cifrados, la cookie no, por lo que cualquiera que se hiciese con ella podría acceder
 	a la cuenta del usuario de forma ilegítima. Este problema afectó sobre todo a Twitter y Facebook, y suscitó grandes esfuerzos por prevenir este tipo
-	 de ataques en sitios web de esta índole.
+	 de ataques en sitios web de esta índole. [\ref{bib-item-9}]
 \end{itemize}
 
 Como podemos observar, cada ataque aprovecha alguna brecha de seguridad o es perpetrado por una entidad con control sobre la red o sobre la autoridad
 de certificación.
 
 \section{Descripción del ataque Man-in-the-Middle}
+
+La información de esta sección (salvo el ejemplo) la hemos extraído de [\ref{bib-item-10}] y [\ref{bib-item-11}], salvo
+una parte de HTTPS Spoofing sofre dominios unicode, que aparece referenciada explícitamente.
 
 Man-in-the-middle es un tipo de ciberataque en el que un atacante intercepta una comunicación entre dos entidades y se hace pasar por ambas a la vez.
 Como resultado, ambos partícipes tienen la sensación de estar comunicándose directamente, cuando realmente la información puede ser
@@ -167,7 +170,7 @@ el número de Alice. Como de costumbre, el banco envía un mensaje a Alice dicie
  	\centering
  	\includegraphics[width=120mm]{images/memoir/mitm}
  	\caption{Esquema de conexión típico de un ataque MITM. En este caso la comunicación es entre cliente y servidor, pero también podría
- 		ser entre dos usuarios.}
+ 		ser entre dos usuarios. \\ Fuente: \href{https://www.insicurezzadigitale.com/cose-un-attacco-man-in-the-middle}{https://www.insicurezzadigitale.com/cose-un-attacco-man-in-the-middle}.}
  \end{figure}
  
  Del mismo modo, este tipo de ataques pueden utilizarse para espiar conversaciones durante un largo tiempo, sin que ninguna de las partes legítimas
@@ -180,7 +183,7 @@ el número de Alice. Como de costumbre, el banco envía un mensaje a Alice dicie
  
  \subsection{Formas de hacer un ataque MITM}
  
- A continuación expondremos diferentes maneras de interceptar una comunicación y suplantar a ambos participantes.
+ A continuación expondremos diferentes maneras de interceptar una comunicación y suplantar a ambos participantes. 
  
  \subsubsection*{ARP Cache Poisoning}
  
@@ -210,7 +213,7 @@ el número de Alice. Como de costumbre, el banco envía un mensaje a Alice dicie
  
  Por ejemplo, si visitamos el enlace \href{https://www.xn--80ak6aa92e.com}{https://www.xn--80ak6aa92e.com} veremos que el dominio que aparece en la
   barra de navegación se asemeja a \href{https://www.apple.com}{https://www.apple.com}, mientras que el contenido es totalmente distinto y ambas páginas
-   utilizan HTTPS. Esto puede evitarse utilizando un navegador que maneje correctamente los dominios unicode o instalando alguna
+   utilizan HTTPS. [\ref{bib-item-12}]. Esto puede evitarse utilizando un navegador que maneje correctamente los dominios unicode o instalando alguna
   \href{https://github.com/yabirgb/punycodeAlert}{extensión} que detecte
  el uso de este tipo de dominios. Otra alternativa sería modificar la `a' de apple (en arabic) por una `a' del cirílico, ambos caracteres se ven
  igual, pero sus valores unicode son diferentes.
@@ -226,6 +229,8 @@ el número de Alice. Como de costumbre, el banco envía un mensaje a Alice dicie
  Al iniciar la comunicación en una página web, se crea una cookie con información relativa a la sesión. Si un atacante es capaz de hacerse con dicha cookie, éste será capaz de navegar por dicha web haciéndose pasar por el usuario.
 
 \section{Cifrado y firma para evitar ataques MITM}
+
+Información extraída de [\ref{bib-item-13}].
 
 Seguidamente, comentamos cómo el sistema de cifrado asimétrico puede ayudarnos a establecer un canal de comunicación libre de este tipo de ataque.
 Todo lo que necesitamos es la seguridad de que el intercambio de claves públicas se haya realizado correctamente, ya sea en persona, por una
@@ -248,7 +253,7 @@ propio intercambio es interceptado por un atacante.
 \section{Simulación de ataque}
 
 A continuación, mostramos una simulación de un ataque Man-in-the-Middle, seguiremos
-\href{https://www.youtube.com/watch?v=fbXu8EX0hsI}{este tutorial}. 
+\href{https://www.youtube.com/watch?v=fbXu8EX0hsI}{este tutorial}. [\ref{bib-item-15}]
 
 Creamos una nueva red local: \texttt{vboxnet1}. En ella tendremos los siguientes hosts:
 \begin{itemize}
@@ -287,7 +292,7 @@ herramienta muestra las las peticiones HTTP que se realizan. Para descargarla, u
 
 El primer paso es activar la redirección de paquetes en la máquina atacante. De otro modo, las víctimas no podrían comunicarse entre sí, ya
 que los paquetes serían interceptados por el atacante, y se percatarían rápidamente del ataque. Podemos lograr esto ejecutando la orden
-\verb|sysctl -w net.ipv4.ip_forward=1|, o escribiendo el valor 1 en el fichero \texttt{/proc/sys/net/ipv4/ip\_forward}.
+\verb|sysctl -w net.ipv4.ip_forward=1|, o escribiendo el valor 1 en el fichero \texttt{/proc/sys/net/ipv4/ip\_forward}. [\ref{bib-item-14}]
 
 \begin{figure}[H]
 	\centering
@@ -524,7 +529,8 @@ Además, \texttt{urlsnarf} registra cada petición HTTP que se haga entre las v�
 \section{Conclusiones}
 
 Con este trabajo, esperamos haber concienciado al lector de la facilidad con la que se puede ser víctima de este tipo de ataques, así como
-de la gravedad que pueden llegar a tener.
+de la gravedad que pueden llegar a tener. La mayoría pueden encontrarse en [\ref{bib-item-16}], pero algunas las hemos deducido
+del resto del contenido de este documento.
 
 Notemos que es muy sencillo realizar un ataque man-in-the-middle cuando existe alguna brecha de seguridad. También cuando se tiene cierto poder
 o control sobre la red o la autoridad de certificación.
@@ -539,7 +545,7 @@ Para finalizar, proporcionaremos algunas recomendaciones y buenas prácticas par
 	\item Usar varios factores de autenticación, lo que dificultará que nos perjudiquen con el robo de credenciales.
 	\item Utilizar algún protocolo de cifrado y firma para intercambiar mensajes importantes.
 	\item Cerrar la sesión en páginas antes de cerrarlas.
-	\item Seguir el principio de \href{https://www.csoonline.com/article/3247848/what-is-zero-trust-a-model-for-more-effective-security.html}{confianza cero}: No aceptar conexiones hasta verificar su procedencia.
+	\item Seguir el principio de \href{https://www.csoonline.com/article/3247848/what-is-zero-trust-a-model-for-more-effective-security.html}{confianza cero}: No aceptar conexiones hasta verificar su procedencia. [\ref{bib-item-17}]
 \end{itemize}
 
 Los siguientes comportamientos podrían indicar que estamos sufriendo un ataque MITM.
@@ -560,48 +566,54 @@ Si se diese el caso, podríamos confirmarlo y/o solucionarlo con las siguientes 
 \section{Bibliografía}
 
 Ataque MTIM en demostración de Marconi.
-\begin{itemize}
-	\item \href{https://havocshield.com/2020/07/cybersecurity-history-the-very-first-man-in-the-middle-attack}{https://havocshield.com/2020/07/cybersecurity-history-the-very-first-man-in-the-middle-attack}.
-	\item \href{https://www.bbc.com/mundo/noticias/2016/05/160523_primer_hacker_caballero_victoriano_marconi_fleming_maskelyne_finde_dv}{https://www.bbc.com/mundo/noticias/2016/05/\\160523\_primer\_hacker\_caballero\_victoriano\_marconi\_fleming\_maskelyne\_finde\_dv}.
-\end{itemize}
+\begin{enumerate}
+	\item \label{bib-item-1} \href{https://havocshield.com/2020/07/cybersecurity-history-the-very-first-man-in-the-middle-attack}{https://havocshield.com/2020/07/cybersecurity-history-the-very-first-man-in-the-middle-attack}.
+	\item \label{bib-item-2} \href{https://www.bbc.com/mundo/noticias/2016/05/160523_primer_hacker_caballero_victoriano_marconi_fleming_maskelyne_finde_dv}{https://www.bbc.com/mundo/noticias/2016/05/\\160523\_primer\_hacker\_caballero\_victoriano\_marconi\_fleming\_maskelyne\_finde\_dv}.
+\end{enumerate}
 
 Primeras menciones a este tipo de ataques:
-\begin{itemize}
-	\item \href{https://www.apriorit.com/dev-blog/526-mitm-attacks-ssl-tls}{https://www.apriorit.com/dev-blog/526-mitm-attacks-ssl-tls}.
-\end{itemize}
+\begin{enumerate}
+	\setcounter{enumi}{2}
+	\item \label{bib-item-3} \href{https://www.apriorit.com/dev-blog/526-mitm-attacks-ssl-tls}{https://www.apriorit.com/dev-blog/526-mitm-attacks-ssl-tls}.
+\end{enumerate}
 
 Ejemplos notables.
-\begin{itemize}
-	\item Escándalo de la NSA: \href{https://www.cnet.com/news/nsa-disguised-itself-as-google-to-spy-say-reports}{https://www.cnet.com/news/nsa-disguised-itself-as-google-to-spy-say-reports}.
-	\item Estafa a la familia Lupton: \href{https://www.conveyancingassociation.org.uk/fraudsters-hacked-emails-to-my-solicitor-and-stole-340000-from-my-property-sale-a-case-study-from-ca-affiliate-members-lawyer-checker}{https://www.conveyancingassociation.org.uk/fraudsters-hacked-emails-to-my-solicitor-and-stole-340000-from-my-property-sale-a-case-study-from-ca-affiliate-members-\\lawyer-checker}.
-	\item Fraude de Comcast: \href{https://www.infoworld.com/article/2925839/code-injection-new-low-isps.html}{https://www.infoworld.com/article/2925839/code-injection-new-low-isps.html}.
-	\item Incidente de Superfish con Lenovo: \href{https://www.techrepublic.com/article/superfish-adware-weakens-security-and-injects-ads-on-some-lenovo-laptops}{https://www.techrepublic.com/article/superfish-adware-weakens-security-and-injects-ads-on-some-lenovo-laptops}.
-	\item Vulnerabilidad en aplicaciones bancarias: \href{https://www.zdnet.com/article/man-in-the-middle-flaw-left-smartphone-banking-apps-vulnerable}{https://www.zdnet.com/article/man-in-the-middle-flaw-left-smartphone-banking-apps-vulnerable}.
-	\item Brecha de seguridad de Firesheep: \href{https://techcrunch.com/2010/10/24/firesheep-in-wolves-clothing-app-lets-you-hack-into-twitter-facebook-accounts-easily}{https://techcrunch.com/2010/10/24/firesheep-in-wolves-clothing-app-lets-you-hack-into-twitter-facebook-accounts-easily}.
-\end{itemize}
+\begin{enumerate}
+	\setcounter{enumi}{3}
+	\item\label{bib-item-4} Escándalo de la NSA: \href{https://www.cnet.com/news/nsa-disguised-itself-as-google-to-spy-say-reports}{https://www.cnet.com/news/nsa-disguised-itself-as-google-to-spy-say-reports}.
+	\item\label{bib-item-5} Estafa a la familia Lupton: \href{https://www.conveyancingassociation.org.uk/fraudsters-hacked-emails-to-my-solicitor-and-stole-340000-from-my-property-sale-a-case-study-from-ca-affiliate-members-lawyer-checker}{https://www.conveyancingassociation.org.uk/fraudsters-hacked-emails-to-my-solicitor-and-stole-340000-from-my-property-sale-a-case-study-from-ca-affiliate-members-\\lawyer-checker}.
+	\item\label{bib-item-6} Fraude de Comcast: \href{https://www.infoworld.com/article/2925839/code-injection-new-low-isps.html}{https://www.infoworld.com/article/2925839/code-injection-new-low-isps.html}.
+	\item\label{bib-item-7} Incidente de Superfish con Lenovo: \href{https://www.techrepublic.com/article/superfish-adware-weakens-security-and-injects-ads-on-some-lenovo-laptops}{https://www.techrepublic.com/article/superfish-adware-weakens-security-and-injects-ads-on-some-lenovo-laptops}.
+	\item\label{bib-item-8} Vulnerabilidad en aplicaciones bancarias: \href{https://www.zdnet.com/article/man-in-the-middle-flaw-left-smartphone-banking-apps-vulnerable}{https://www.zdnet.com/article/man-in-the-middle-flaw-left-smartphone-banking-apps-vulnerable}.
+	\item\label{bib-item-9} Brecha de seguridad de Firesheep: \href{https://techcrunch.com/2010/10/24/firesheep-in-wolves-clothing-app-lets-you-hack-into-twitter-facebook-accounts-easily}{https://techcrunch.com/2010/10/24/firesheep-in-wolves-clothing-app-lets-you-hack-into-twitter-facebook-accounts-easily}.
+\end{enumerate}
 
 Ataque MITM: Explicación y tipos.
-\begin{itemize}
-	\item What is a MITM Attack, Detection and Prevention Tips: \href{https://www.varonis.com/blog/man-in-the-middle-attack}{https://www.varonis.com/blog/man-in-the-middle-attack}.
-	\item A Review of Man-in-the-Middle Attacks: \href{https://arxiv.org/pdf/1504.02115.pdf}{https://arxiv.org/pdf/1504.02115.pdf}.
-	\item Punycode alert: \href{https://github.com/yabirgb/punycodeAlert}{https://github.com/yabirgb/punycodeAlert}.
-\end{itemize}
+\begin{enumerate}
+	\setcounter{enumi}{9}
+	\item\label{bib-item-10} What is a MITM Attack, Detection and Prevention Tips: \href{https://www.varonis.com/blog/man-in-the-middle-attack}{https://www.varonis.com/blog/man-in-the-middle-attack}.
+	\item\label{bib-item-11} A Review of Man-in-the-Middle Attacks: \href{https://arxiv.org/pdf/1504.02115.pdf}{https://arxiv.org/pdf/1504.02115.pdf}.
+	\item\label{bib-item-12} Punycode alert: \href{https://github.com/yabirgb/punycodeAlert}{https://github.com/yabirgb/punycodeAlert}.
+\end{enumerate}
 
 Cifrado y firma para evitar ataques MITM.
-\begin{itemize}
-	\item Asignatura Seguridad y Protección de Sistemas Informáticos. Apuntes del profesor Francisco Miguel García Olmedo.
-\end{itemize}
+\begin{enumerate}
+	\setcounter{enumi}{12}
+	\item\label{bib-item-13} Asignatura Seguridad y Protección de Sistemas Informáticos. Apuntes del profesor Francisco Miguel García Olmedo.
+\end{enumerate}
 
 Simulación.
-\begin{itemize}
-	\item Rediredirección de paquetes: \href{https://www.garron.me/es/gnu-linux/habilitar-ip-forward-linux-ubuntu.html}{https://www.garron.me/es/gnu-linux/habilitar-ip-forward-linux-\\ubuntu.html}.
-	\item Tutorial YouTube: \href{https://www.youtube.com/watch?v=fbXu8EX0hsI}{https://www.youtube.com/watch?v=fbXu8EX0hsI}.
-\end{itemize}
+\begin{enumerate}
+	\setcounter{enumi}{13}
+	\item\label{bib-item-14} Redirección de paquetes: \href{https://www.garron.me/es/gnu-linux/habilitar-ip-forward-linux-ubuntu.html}{https://www.garron.me/es/gnu-linux/habilitar-ip-forward-linux-\\ubuntu.html}.
+	\item\label{bib-item-15} Tutorial YouTube: \href{https://www.youtube.com/watch?v=fbXu8EX0hsI}{https://www.youtube.com/watch?v=fbXu8EX0hsI}.
+\end{enumerate}
 
 Consejos para evitar ser víctimas del ataque.
-\begin{itemize}
-	\item What is a MITM Attack, Detection and Prevention Tips: \href{https://www.varonis.com/blog/man-in-the-middle-attack}{https://www.varonis.com/blog/man-in-the-middle-attack}.
-	\item Zero Trust: \href{https://www.csoonline.com/article/3247848/what-is-zero-trust-a-model-for-more-effective-security.html}{https://www.csoonline.com/article/3247848/what-is-zero-trust-a-model-for-more-effective-security.html}.
-\end{itemize}
+\begin{enumerate}
+	\setcounter{enumi}{15}
+	\item\label{bib-item-16} What is a MITM Attack, Detection and Prevention Tips: \href{https://www.varonis.com/blog/man-in-the-middle-attack}{https://www.varonis.com/blog/man-in-the-middle-attack}.
+	\item\label{bib-item-17} Zero Trust: \href{https://www.csoonline.com/article/3247848/what-is-zero-trust-a-model-for-more-effective-security.html}{https://www.csoonline.com/article/3247848/what-is-zero-trust-a-model-for-more-effective-security.html}.
+\end{enumerate}
 
 \end{document}

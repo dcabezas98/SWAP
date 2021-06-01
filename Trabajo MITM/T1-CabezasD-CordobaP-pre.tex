@@ -38,6 +38,13 @@ urlcolor=blue}
   \end{frame}
 }
 
+\addtobeamertemplate{navigation symbols}{}{%
+	\usebeamerfont{footline}%
+	\usebeamercolor[fg]{footline}%
+	\hspace{1em}%
+	\insertframenumber/\inserttotalframenumber
+}
+
 \begin{document}
 
 \title{Ataques Man-in-the-Middle}  
@@ -243,5 +250,56 @@ Los atacantes pueden interceptar el tráfico en redes públicas o inseguras, o inc
 \end{frame}
 
 \section{Bibliografía}
+
+\begin{frame}{Bibliografía}
+\begin{small}
+	Ataque MTIM en demostración de Marconi.
+\begin{enumerate}
+	\item \label{bib-item-1} \href{https://havocshield.com/2020/07/cybersecurity-history-the-very-first-man-in-the-middle-attack}{https://havocshield.com/2020/07/cybersecurity-history-the-very-first-man-in-the-middle-attack}.
+	\item \label{bib-item-2} \href{https://www.bbc.com/mundo/noticias/2016/05/160523_primer_hacker_caballero_victoriano_marconi_fleming_maskelyne_finde_dv}{https://www.bbc.com/mundo/noticias/2016/05/\\160523\_primer\_hacker\_caballero\_victoriano\_marconi\_fleming\_maskelyne\_finde\_dv}.
+\end{enumerate}
+Ejemplos notables.
+\begin{enumerate}
+	\setcounter{enumi}{3}
+	\item\label{bib-item-4} Escándalo de la NSA: \href{https://www.cnet.com/news/nsa-disguised-itself-as-google-to-spy-say-reports}{https://www.cnet.com/news/nsa-disguised-itself-as-google-to-spy-say-reports}.
+	\item\label{bib-item-5} Estafa a la familia Lupton: \href{https://www.conveyancingassociation.org.uk/fraudsters-hacked-emails-to-my-solicitor-and-stole-340000-from-my-property-sale-a-case-study-from-ca-affiliate-members-lawyer-checker}{https://www.conveyancingassociation.org.uk/fraudsters-hacked-emails-to-my-solicitor-and-stole-340000-from-my-property-sale-a-case-study-from-ca-affiliate-members-lawyer-checker}.
+\end{enumerate}
+\end{small}
+\end{frame}
+
+\begin{frame}{Bibliografía}
+	\begin{small}
+Ataque MITM: Explicación y tipos.
+\begin{enumerate}
+	\setcounter{enumi}{5}
+	\item\label{bib-item-10} What is a MITM Attack, Detection and Prevention Tips: \href{https://www.varonis.com/blog/man-in-the-middle-attack}{https://www.varonis.com/blog/man-in-the-middle-attack}.
+	\item\label{bib-item-11} A Review of Man-in-the-Middle Attacks: \href{https://arxiv.org/pdf/1504.02115.pdf}{https://arxiv.org/pdf/1504.02115.pdf}.
+	\item\label{bib-item-12} Punycode alert: \href{https://github.com/yabirgb/punycodeAlert}{https://github.com/yabirgb/punycodeAlert}.
+\end{enumerate}
+	Cifrado y firma para evitar ataques MITM.
+	\begin{enumerate}
+		\setcounter{enumi}{8}
+		\item\label{bib-item-13} Asignatura Seguridad y Protección de Sistemas Informáticos. Apuntes del profesor Francisco Miguel García Olmedo.	
+\end{enumerate}
+\end{small}
+\end{frame}
+
+\begin{frame}{Bibliografía}
+	\begin{small}
+Simulación.
+\begin{enumerate}
+	\setcounter{enumi}{9}
+	\item\label{bib-item-14} Redirección de paquetes: \href{https://www.garron.me/es/gnu-linux/habilitar-ip-forward-linux-ubuntu.html}{https://www.garron.me/es/gnu-linux/habilitar-ip-forward-linux-ubuntu.html}.
+	\item\label{bib-item-15} Tutorial YouTube: \href{https://www.youtube.com/watch?v=fbXu8EX0hsI}{https://www.youtube.com/watch?v=fbXu8EX0hsI}.
+\end{enumerate}
+
+Consejos para evitar ser víctimas del ataque.
+\begin{enumerate}
+	\setcounter{enumi}{11}
+	\item\label{bib-item-16} What is a MITM Attack, Detection and Prevention Tips: \href{https://www.varonis.com/blog/man-in-the-middle-attack}{https://www.varonis.com/blog/man-in-the-middle-attack}.
+	\item\label{bib-item-17} Zero Trust: \href{https://www.csoonline.com/article/3247848/what-is-zero-trust-a-model-for-more-effective-security.html}{https://www.csoonline.com/article/3247848/what-is-zero-trust-a-model-for-more-effective-security.html}.
+\end{enumerate}
+\end{small}
+\end{frame}
 
 \end{document}
