@@ -10,6 +10,7 @@
 
 \usepackage{ marvosym }
 \usepackage{parskip}
+\usepackage{fancyvrb}
 
 \hypersetup{bookmarks=true,
 bookmarksnumbered=false, % true means bookmarks in 
@@ -109,7 +110,7 @@ sobre las distintas formas en las que se manifiesta y saber cómo protegerse de é
 	\begin{enumerate}\setlength\itemsep{4mm}
 		\item Bob (cliente) quiere conectarse a la web del banco (servidor) para hacer una transferencia de 500\EUR \ a la cuenta XXX.
 		\item Alice (atacante) intercepta la conexión y conduce a Bob a una réplica de la web del banco creada por ella.
-		\item Bob intriduce sus credenciales, que son recibidos por Alice.
+		\item Bob introduce sus credenciales, que son recibidos por Alice.
 		\item Alice se conecta a la aplicación del web con los credenciales de Bob.
 		\item Bob rellena el formulario (falso) para realizar la transferencia.
 	\end{enumerate} 
@@ -154,13 +155,13 @@ sobre las distintas formas en las que se manifiesta y saber cómo protegerse de é
  víctimas y recibiendo los mensajes que vayan destinados a cualquiera de las víctimas desde la otra.
 \end{frame}
 
-\begin{frame}
- \begin{figure}[H]
-	\centering
-	\includegraphics[width=110mm]{images/esquema-arp}
-	\caption{Esquema de ARP Cache Poisoning. Fotograma extraído del tutorial \href{https://www.youtube.com/watch?v=fbXu8EX0hsI}{https://www.youtube.com/watch?v=fbXu8EX0hsI}.}
-\end{figure}
-\end{frame}
+%\begin{frame}
+% \begin{figure}[H]
+%	\centering
+%	\includegraphics[width=110mm]{images/esquema-arp}
+%	\caption{Esquema de ARP Cache Poisoning. Fotograma extraído del tutorial \href{https://www.youtube.com/watch?v=fbXu8EX0hsI}{https://www.youtube.com/watch?v=fbXu8EX0hsI}.}
+%\end{figure}
+%\end{frame}
 
 \begin{frame}{DNS Cache Poisoning}
 	Un atacante se infiltra en la comunicación entre un usuario y un servidor DNS, para proporcionarle al usuario una entrada DNS falsa que conduce a una página  creada por el atacante.
@@ -194,25 +195,130 @@ Los atacantes pueden interceptar el tráfico en redes públicas o inseguras, o inc
 \end{frame}
 
 
-\section{Cifrado y firma para evitar ataques MITM}
-
-\begin{frame}{Cifrado con clave asimétrica}
-	Bajo el supuesto de que el intercambio de claves públicas pueda producirse en un canal seguro (lo que no siempre ocurre), el sistema de cifrado asímetrico permite establecer un canal de comunicación libre de este tipo de ataques.
-	
-	\vspace{3mm}
-	
-	Estas claves son utilizadas tanto para descifrar los mensajes como para identificar al emisor, por lo que ningún atacante podría acceder a la información cifrada ni suplantar a sus víctimas sin conocer sus claves privadas.	
-\end{frame}
+%\section{Cifrado y firma para evitar ataques MITM}
+%
+%\begin{frame}{Cifrado con clave asimétrica}
+%	Bajo el supuesto de que el intercambio de claves públicas pueda producirse en un canal seguro (lo que no siempre ocurre), el sistema de cifrado asímetrico permite establecer un canal de comunicación libre de este tipo de ataques.
+%	
+%	\vspace{3mm}
+%	
+%	Estas claves son utilizadas tanto para descifrar los mensajes como para identificar al emisor, por lo que ningún atacante podría acceder a la información cifrada ni suplantar a sus víctimas sin conocer sus claves privadas.	
+%\end{frame}
 
 \section{Simulación de ataque}
 
-\begin{frame}{Simulación de ataque}
-	Vídeo simulando un ataque MITM con ARP Cache Poisoning.
-	
+\begin{frame}[fragile]{Simulación de ataque MITM con ARP Cache Poisoning}
 	Seguimos el tutorial de: \href{https://www.youtube.com/watch?v=fbXu8EX0hsI}{https://www.youtube.com/watch?v=fbXu8EX0hsI}.
+	Tenemos las siguientes máquinas en la red \texttt{vboxnet1}.
+	
+	\vspace{5mm}
+	
+	\begin{table}[H]
+		\centering
+		\begin{tabular}{|c|c|c|}
+			\hline
+			\textbf{Host} & \textbf{IP}  & \textbf{MAC}      \\ \hline
+			Atacante      & 192.168.57.1 & 0a:00:27:00:00:01 \\ \hline
+			Cliente       & 192.168.57.3 & 08:00:27:01:3a:c8 \\ \hline
+			Servidor      & 192.168.57.4 & 08:00:27:6c:b7:f2 \\ \hline
+		\end{tabular}
+	\end{table}
+
+	\vspace{5mm}
+	
+	Tenemos que activar la redirección de paquetes en la máquina atacante. Podemos lograr esto ejecutando la orden\\
+		\begin{Verbatim}[tabsize=4]
+			sudo sysctl -w net.ipv4.ip_forward=1
+		\end{Verbatim}
+\end{frame}
+
+\begin{frame}
+	Abrimos Ettercap y seleccionamos la interfaz \texttt{vboxnet1}.
+	\vspace{-2mm}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=75mm]{images/ettercap-start}
+\end{figure}
+\vspace{-6mm}
+Pulsamos \textit{Scan for hosts} (la lupa) y luego \textit{Hosts List}.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=110mm]{images/host-list}
+\end{figure}
+\end{frame}
+
+\begin{frame}
+	\vspace{2mm}
+	Añadimos 192.168.57.3 (cliente) a Target 1 y 192.168.57.4 (servidor) a Target 2.\\
+	Luego pulsamos ARP poisoning en el menú MITM.
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=110mm]{images/ettercap-mitm-arp-poisoning}
+	\end{figure}
+	\vspace{-7mm}
+	Marcamos Sniff remote connections en la ventana emergente que aparece.
+	\vspace{-2mm}
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=60mm]{images/ettercap-arp-poisoning}
+	\end{figure}
+\end{frame}
+
+\begin{frame}[fragile]{Análisis con Wireshark}
+	El atacante envenena la caché de ARP de las víctimas.
+	\vspace{-1mm}
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=110mm]{images/atack1/wireshark-arp}
+	\end{figure}
+	\vspace{-7mm}
+	Cuando el cliente hace curl al servidor, obtenemos
+	\vspace{-3mm}
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=75mm]{images/presentacion/request}
+	\end{figure}
+\end{frame}
+
+\begin{frame}
+	El SYN del cliente al servidor se envía en dos paquetes, pasando por el atacante.
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=110mm]{images/atack1/syn-client-atacker}
+	\end{figure}
+\vspace{-7mm}
+Las direcciones IP son engañosas. En las direcciones físicas observamos que el atacante hace de intermediario.	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=110mm]{images/atack1/syn-atacker-server}
+	\end{figure}
+\end{frame}
+
+\begin{frame}
+	Lo mismo ocurre con cada paquete del proceso de comunicación.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=110mm]{images/atack1/response-server-atacker}
+\end{figure}
+\vspace{-7mm}
+En partircular, la respuesta del servidor pasa por el atacante.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=110mm]{images/atack1/response-atacker-client}
+\end{figure}
 \end{frame}
 
 \section{Conclusiones}
+
+\begin{frame}{Conclusiones}
+	Esperamos haber concienciado sobre la facilidad con la que se puede ser víctima de este tipo de ataques, así como
+	de la gravedad que pueden llegar a tener.
+	
+	\vspace{5mm}
+	
+	A continuación, ofrecemos una serie de consejos y buenas prácticas para prevenir o percatarse de estos ataques.
+\end{frame}
 
 \begin{frame}{Consejos y buenas prácticas}
 	\begin{itemize}\setlength\itemsep{4mm}
